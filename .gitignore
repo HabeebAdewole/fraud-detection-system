@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+venv/
+.venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# Models (large binary files — train locally)
+models/*.pkl
+models/metrics.json
+models/features.json
+
+# Data
+data/*.csv
+data/*.zip
+
+# Flask
+instance/
+*.db
+reports/
+
+# Node / React
+node_modules/
+dist/
+.env
+.env.local
+
+# VS Code
+.vscode/settings.json
+
+# OS
+.DS_Store
+Thumbs.db
