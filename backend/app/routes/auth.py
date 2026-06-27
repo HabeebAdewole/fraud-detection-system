@@ -16,14 +16,14 @@ def login():
     if not user or not bcrypt.check_password_hash(user.password_hash, password):
         return jsonify({"error": "Invalid credentials"}), 401
 
-    token = create_access_token(identity=user.user_id)
+    token = create_access_token(identity=str(user.user_id))
     return jsonify({"access_token": token, "user": user.to_dict()}), 200
 
 
 @auth_bp.route("/me", methods=["GET"])
 @jwt_required()
 def me():
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     user = User.query.get_or_404(user_id)
     return jsonify(user.to_dict()), 200
 
