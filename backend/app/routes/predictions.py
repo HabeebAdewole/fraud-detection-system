@@ -20,7 +20,7 @@ def submit_prediction():
     stores the prediction, and creates an alert if fraud is detected.
     """
     data = request.get_json()
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
 
     # Store transaction
     tx = Transaction(
