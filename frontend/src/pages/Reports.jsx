@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { reportApi } from "../services/api";
-import Navbar from "../components/shared/Navbar";
+import Layout from "../components/shared/Layout";
 
 const TYPES = ["fraud_summary", "alert_resolution", "transaction_overview"];
 
@@ -11,7 +11,7 @@ export default function Reports() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    reportApi.list().then(d => setReports(d.reports));
+    reportApi.list().then((d) => setReports(d.reports));
   }, []);
 
   async function handleGenerate(e) {
@@ -20,82 +20,77 @@ export default function Reports() {
     setLoading(true);
     try {
       const report = await reportApi.generate(form);
-      setReports(prev => [report, ...prev]);
+      setReports((prev) => [report, ...prev]);
     } catch (err) {
-      setError(err.message || "Failed to generate report");
+      setError(err.message || "Could not generate report");
     } finally {
       setLoading(false);
     }
   }
 
-  const inputCls = "bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
-
   return (
-    <div className="min-h-screen bg-slate-900">
-      <Navbar />
-      <div className="max-w-4xl mx-auto p-6">
-        <h2 className="text-white text-2xl font-bold mb-6">Reports</h2>
+    <Layout eyebrow="Operations" title="Reports">
+      <div className="grid lg:grid-cols-[360px_1fr] gap-6 items-start">
+        <form onSubmit={handleGenerate} className="panel p-6">
+          <p className="eyebrow mb-1">New report</p>
+          <h2 className="font-display font-bold tracking-tight mb-5">Export screening data</h2>
 
-        <div className="bg-slate-800 border border-slate-700 rounded-xl p-5 mb-8">
-          <h3 className="text-white font-semibold mb-4">Generate New Report</h3>
-          {error && <p className="text-red-400 text-sm mb-3">{error}</p>}
-          <form onSubmit={handleGenerate} className="flex flex-wrap gap-3 items-end">
+          {error && <div className="panel-2 border-red/30 bg-red/10 px-4 py-3 text-sm text-red mb-4">{error}</div>}
+
+          <div className="space-y-4">
             <div>
-              <label className="block text-slate-400 text-xs mb-1">Report Type</label>
-              <select className={inputCls} value={form.report_type} onChange={e => setForm(f => ({ ...f, report_type: e.target.value }))}>
-                {TYPES.map(t => <option key={t}>{t}</option>)}
+              <label className="field-label">Report type</label>
+              <select className="input" value={form.report_type} onChange={(e) => setForm((f) => ({ ...f, report_type: e.target.value }))}>
+                {TYPES.map((t) => <option key={t} className="bg-panel">{t.replace(/_/g, " ")}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-slate-400 text-xs mb-1">Start Date</label>
-              <input type="date" className={inputCls} required value={form.date_range_start} onChange={e => setForm(f => ({ ...f, date_range_start: e.target.value }))} />
+              <label className="field-label">From</label>
+              <input type="date" className="input-mono" required value={form.date_range_start} onChange={(e) => setForm((f) => ({ ...f, date_range_start: e.target.value }))} />
             </div>
             <div>
-              <label className="block text-slate-400 text-xs mb-1">End Date</label>
-              <input type="date" className={inputCls} required value={form.date_range_end} onChange={e => setForm(f => ({ ...f, date_range_end: e.target.value }))} />
+              <label className="field-label">To</label>
+              <input type="date" className="input-mono" required value={form.date_range_end} onChange={(e) => setForm((f) => ({ ...f, date_range_end: e.target.value }))} />
             </div>
-            <button disabled={loading} className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
-              {loading ? "Generating…" : "Generate"}
+            <button disabled={loading} className="btn-primary w-full">
+              {loading ? "Generating…" : "Generate report"}
             </button>
-          </form>
-        </div>
-
-        <h3 className="text-white font-semibold mb-3">Report History</h3>
-        {reports.length === 0 ? (
-          <p className="text-slate-500">No reports generated yet.</p>
-        ) : (
-          <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
-            <table className="w-full text-sm text-slate-300">
-              <thead className="text-slate-400 border-b border-slate-700">
-                <tr>
-                  {["ID", "Type", "Date Range", "Generated At", "Download"].map(h => (
-                    <th key={h} className="text-left px-4 py-3 font-medium">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {reports.map(r => (
-                  <tr key={r.report_id} className="border-b border-slate-700 hover:bg-slate-700/40">
-                    <td className="px-4 py-3">{r.report_id}</td>
-                    <td className="px-4 py-3 capitalize">{r.report_type.replace("_", " ")}</td>
-                    <td className="px-4 py-3">{r.date_range_start} → {r.date_range_end}</td>
-                    <td className="px-4 py-3 text-slate-500">{new Date(r.generated_at).toLocaleString()}</td>
-                    <td className="px-4 py-3">
-                      <a
-                        href={reportApi.downloadUrl(r.report_id)}
-                        className="text-blue-400 hover:text-blue-300 text-xs"
-                        download
-                      >
-                        Download CSV
-                      </a>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           </div>
-        )}
+        </form>
+
+        <div className="panel overflow-hidden">
+          <div className="px-5 py-4 border-b border-line">
+            <p className="eyebrow mb-1">History</p>
+            <h2 className="font-display font-bold tracking-tight">Generated reports</h2>
+          </div>
+          {reports.length === 0 ? (
+            <div className="p-12 text-center text-muted text-sm">No reports yet — generate one to start a history.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="data-table">
+                <thead>
+                  <tr><th>ID</th><th>Type</th><th>Range</th><th>Generated</th><th>File</th></tr>
+                </thead>
+                <tbody>
+                  {reports.map((r) => (
+                    <tr key={r.report_id}>
+                      <td className="font-mono text-muted">#{r.report_id}</td>
+                      <td className="capitalize">{r.report_type.replace(/_/g, " ")}</td>
+                      <td className="font-mono text-[12px]">{r.date_range_start} → {r.date_range_end}</td>
+                      <td className="font-mono text-[12px] text-muted">{new Date(r.generated_at).toLocaleDateString()}</td>
+                      <td>
+                        <a href={reportApi.downloadUrl(r.report_id)} download className="font-mono text-[11px] text-cyan hover:underline">
+                          DOWNLOAD CSV ↓
+                        </a>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </Layout>
   );
 }
