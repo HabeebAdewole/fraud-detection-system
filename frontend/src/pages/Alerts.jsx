@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
 import { predictionApi } from "../services/api";
-import Navbar from "../components/shared/Navbar";
+import Layout from "../components/shared/Layout";
 
 export default function Alerts() {
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [notes, setNotes] = useState({});
+  const [filter, setFilter] = useState("all");
 
   useEffect(() => {
-    predictionApi.listAlerts().then(d => setAlerts(d.alerts)).finally(() => setLoading(false));
+    predictionApi.listAlerts().then((d) => setAlerts(d.alerts)).finally(() => setLoading(false));
   }, []);
 
   async function resolve(alertId) {
@@ -16,63 +17,103 @@ export default function Alerts() {
       alert_status: "resolved",
       notes: notes[alertId] || "",
     });
-    setAlerts(prev => prev.map(a => a.alert_id === alertId ? updated : a));
+    setAlerts((prev) => prev.map((a) => (a.alert_id === alertId ? updated : a)));
   }
 
+  const shown = alerts.filter((a) => filter === "all" || a.alert_status === filter);
+  const openCount = alerts.filter((a) => a.alert_status === "open").length;
+
+  const Tab = ({ id, label }) => (
+    <button
+      onClick={() => setFilter(id)}
+      className={`font-mono text-[11px] uppercase tracking-wide px-3 py-1.5 rounded-md transition-colors ${
+        filter === id ? "bg-cyan/12 text-cyan" : "text-muted hover:text-text"
+      }`}
+    >
+      {label}
+    </button>
+  );
+
   return (
-    <div className="min-h-screen bg-slate-900">
-      <Navbar />
-      <div className="max-w-6xl mx-auto p-6">
-        <h2 className="text-white text-2xl font-bold mb-6">Fraud Alerts</h2>
-        {loading ? (
-          <p className="text-slate-400">Loading…</p>
-        ) : alerts.length === 0 ? (
-          <p className="text-slate-500">No alerts found.</p>
-        ) : (
-          <div className="space-y-4">
-            {alerts.map(alert => (
-              <div key={alert.alert_id} className={`bg-slate-800 border rounded-xl p-5 ${alert.alert_status === "open" ? "border-yellow-600" : "border-slate-700"}`}>
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <span className="text-white font-semibold">Alert #{alert.alert_id}</span>
-                    <span className={`ml-3 px-2 py-0.5 text-xs rounded-full font-semibold ${alert.alert_status === "open" ? "bg-yellow-900/50 text-yellow-300" : "bg-green-900/50 text-green-300"}`}>
-                      {alert.alert_status.toUpperCase()}
-                    </span>
+    <Layout
+      eyebrow="Operations"
+      title="Alerts"
+      actions={openCount > 0 && <span className="pill-amber">{openCount} open</span>}
+    >
+      <div className="flex items-center gap-1 mb-5 panel-2 inline-flex p-1 w-fit">
+        <Tab id="all" label="All" />
+        <Tab id="open" label="Open" />
+        <Tab id="resolved" label="Resolved" />
+      </div>
+
+      {loading ? (
+        <p className="text-muted font-mono text-sm">Loading alerts…</p>
+      ) : shown.length === 0 ? (
+        <div className="panel p-12 text-center">
+          <p className="eyebrow mb-2">All clear</p>
+          <p className="text-muted text-sm">No alerts match this filter.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {shown.map((alert) => {
+            const open = alert.alert_status === "open";
+            return (
+              <div key={alert.alert_id} className={`panel p-5 ${open ? "border-amber/25" : ""}`}>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3 mb-3">
+                      <span className="font-mono text-sm">Alert #{alert.alert_id}</span>
+                      <span className={open ? "pill-amber" : "pill-cyan"}>{alert.alert_status}</span>
+                    </div>
+
+                    {alert.transaction && (
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        <div>
+                          <p className="eyebrow mb-1">Type</p>
+                          <p className="font-mono text-sm">{alert.transaction.type}</p>
+                        </div>
+                        <div>
+                          <p className="eyebrow mb-1">Amount</p>
+                          <p className="font-mono text-sm">{Number(alert.transaction.amount).toLocaleString()}</p>
+                        </div>
+                        <div>
+                          <p className="eyebrow mb-1">Probability</p>
+                          <p className="font-mono text-sm text-red">{(alert.fraud_probability * 100).toFixed(1)}%</p>
+                        </div>
+                        <div>
+                          <p className="eyebrow mb-1">Txn</p>
+                          <p className="font-mono text-sm text-muted">#{alert.transaction.transaction_id}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {alert.notes && (
+                      <p className="mt-4 text-[13px] text-muted">
+                        <span className="font-mono text-[10px] uppercase tracking-wide mr-2">Note</span>
+                        {alert.notes}
+                      </p>
+                    )}
                   </div>
-                  <span className="text-slate-400 text-sm">Prediction #{alert.prediction_id}</span>
                 </div>
 
-                {alert.transaction && (
-                  <div className="grid grid-cols-3 gap-2 text-sm text-slate-300 mb-3">
-                    <span>Type: <strong>{alert.transaction.type}</strong></span>
-                    <span>Amount: <strong>${alert.transaction.amount?.toLocaleString()}</strong></span>
-                    <span>Fraud prob: <strong className="text-red-400">{(alert.fraud_probability * 100).toFixed(1)}%</strong></span>
-                  </div>
-                )}
-
-                {alert.alert_status === "open" && (
-                  <div className="flex gap-2 mt-2">
+                {open && (
+                  <div className="flex gap-2 mt-4 pt-4 border-t border-line-soft">
                     <input
-                      className="flex-1 bg-slate-700 border border-slate-600 rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Add resolution notes…"
+                      className="input flex-1"
+                      placeholder="Add a resolution note…"
                       value={notes[alert.alert_id] || ""}
-                      onChange={e => setNotes(n => ({ ...n, [alert.alert_id]: e.target.value }))}
+                      onChange={(e) => setNotes((n) => ({ ...n, [alert.alert_id]: e.target.value }))}
                     />
-                    <button
-                      onClick={() => resolve(alert.alert_id)}
-                      className="px-4 py-1.5 bg-green-700 hover:bg-green-600 text-white text-sm rounded-lg font-semibold transition-colors"
-                    >
-                      Resolve
+                    <button onClick={() => resolve(alert.alert_id)} className="btn-primary whitespace-nowrap">
+                      Mark resolved
                     </button>
                   </div>
                 )}
-
-                {alert.notes && <p className="text-slate-400 text-sm mt-2">Notes: {alert.notes}</p>}
               </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
+            );
+          })}
+        </div>
+      )}
+    </Layout>
   );
 }
