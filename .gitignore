@@ -12,8 +12,12 @@ build/
 
 # Models (large binary files — train locally)
 models/*.pkl
+models/*.pt
+models/*.npy
+models/*.npz
 models/metrics.json
 models/features.json
+models/elliptic_*.json
 
 # Data
 data/*.csv

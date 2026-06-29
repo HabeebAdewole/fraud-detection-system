@@ -18,36 +18,30 @@ class User(db.Model):
 
 
 class Transaction(db.Model):
+    """A Bitcoin transaction node from the Elliptic dataset."""
     __tablename__ = "transaction"
-    transaction_id    = db.Column(db.Integer, primary_key=True)
-    step              = db.Column(db.Integer, nullable=False)
-    type              = db.Column(db.String(20), nullable=False)
-    amount            = db.Column(db.Float, nullable=False)
-    name_orig         = db.Column(db.String(50))
-    old_balance_orig  = db.Column(db.Float)
-    new_balance_orig  = db.Column(db.Float)
-    name_dest         = db.Column(db.String(50))
-    old_balance_dest  = db.Column(db.Float)
-    new_balance_dest  = db.Column(db.Float)
-    is_fraud          = db.Column(db.Boolean)
-    created_at        = db.Column(db.DateTime, default=datetime.utcnow)
+    tx_id      = db.Column(db.BigInteger, primary_key=True, autoincrement=False)
+    time_step  = db.Column(db.Integer, index=True)
+    label      = db.Column(db.String(10), index=True)  # illicit / licit / unknown
 
     def to_dict(self):
-        return {
-            "transaction_id": self.transaction_id,
-            "step": self.step, "type": self.type, "amount": self.amount,
-            "name_orig": self.name_orig, "old_balance_orig": self.old_balance_orig,
-            "new_balance_orig": self.new_balance_orig, "name_dest": self.name_dest,
-            "old_balance_dest": self.old_balance_dest, "new_balance_dest": self.new_balance_dest,
-            "is_fraud": self.is_fraud, "created_at": self.created_at.isoformat(),
-        }
+        return {"tx_id": self.tx_id, "time_step": self.time_step, "label": self.label}
+
+
+class Edge(db.Model):
+    """A directed payment-flow edge between two transactions."""
+    __tablename__ = "edge"
+    id        = db.Column(db.Integer, primary_key=True)
+    source_tx = db.Column(db.BigInteger, index=True, nullable=False)
+    target_tx = db.Column(db.BigInteger, index=True, nullable=False)
 
 
 class Prediction(db.Model):
     __tablename__ = "prediction"
     prediction_id        = db.Column(db.Integer, primary_key=True)
-    transaction_id       = db.Column(db.Integer, db.ForeignKey("transaction.transaction_id"), nullable=False)
+    transaction_id       = db.Column(db.BigInteger, db.ForeignKey("transaction.tx_id"), nullable=False)
     user_id              = db.Column(db.Integer, db.ForeignKey("user.user_id"), nullable=False)
+    model_type           = db.Column(db.String(40), default="RandomForest")
     predicted_class      = db.Column(db.Integer, nullable=False)
     fraud_probability    = db.Column(db.Float, nullable=False)
     prediction_timestamp = db.Column(db.DateTime, default=datetime.utcnow)
@@ -60,6 +54,7 @@ class Prediction(db.Model):
             "prediction_id": self.prediction_id,
             "transaction_id": self.transaction_id,
             "user_id": self.user_id,
+            "model_type": self.model_type,
             "predicted_class": self.predicted_class,
             "fraud_probability": self.fraud_probability,
             "prediction_timestamp": self.prediction_timestamp.isoformat(),
@@ -88,6 +83,7 @@ class Alert(db.Model):
             "notes": self.notes,
             "transaction": self.prediction.transaction.to_dict() if self.prediction else None,
             "fraud_probability": self.prediction.fraud_probability if self.prediction else None,
+            "model_type": self.prediction.model_type if self.prediction else None,
         }
 
 
@@ -118,7 +114,8 @@ class Report(db.Model):
 class ModelMetrics(db.Model):
     __tablename__ = "model_metrics"
     metric_id     = db.Column(db.Integer, primary_key=True)
-    model_version = db.Column(db.String(20), nullable=False)
+    model_version = db.Column(db.String(40), nullable=False)
+    model_type    = db.Column(db.String(40))
     accuracy      = db.Column(db.Float)
     precision     = db.Column(db.Float)
     recall        = db.Column(db.Float)
@@ -130,6 +127,7 @@ class ModelMetrics(db.Model):
         return {
             "metric_id": self.metric_id,
             "model_version": self.model_version,
+            "model_type": self.model_type,
             "accuracy": self.accuracy,
             "precision": self.precision,
             "recall": self.recall,
