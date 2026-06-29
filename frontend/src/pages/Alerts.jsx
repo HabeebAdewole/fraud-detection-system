@@ -69,20 +69,22 @@ export default function Alerts() {
                     {alert.transaction && (
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                         <div>
-                          <p className="eyebrow mb-1">Type</p>
-                          <p className="font-mono text-sm">{alert.transaction.type}</p>
+                          <p className="eyebrow mb-1">Transaction</p>
+                          <p className="font-mono text-sm">{alert.transaction.tx_id}</p>
                         </div>
                         <div>
-                          <p className="eyebrow mb-1">Amount</p>
-                          <p className="font-mono text-sm">{Number(alert.transaction.amount).toLocaleString()}</p>
+                          <p className="eyebrow mb-1">Ground truth</p>
+                          <p className={`font-mono text-sm ${alert.transaction.label === "illicit" ? "text-red" : alert.transaction.label === "licit" ? "text-cyan" : "text-muted"}`}>
+                            {alert.transaction.label}
+                          </p>
                         </div>
                         <div>
                           <p className="eyebrow mb-1">Probability</p>
                           <p className="font-mono text-sm text-red">{(alert.fraud_probability * 100).toFixed(1)}%</p>
                         </div>
                         <div>
-                          <p className="eyebrow mb-1">Txn</p>
-                          <p className="font-mono text-sm text-muted">#{alert.transaction.transaction_id}</p>
+                          <p className="eyebrow mb-1">Model</p>
+                          <p className="font-mono text-sm text-muted">{alert.model_type}</p>
                         </div>
                       </div>
                     )}

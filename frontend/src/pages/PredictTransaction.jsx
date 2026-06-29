@@ -1,162 +1,190 @@
-import { useState } from "react";
-import { predictionApi } from "../services/api";
+import { useEffect, useState } from "react";
+import { transactionApi, predictionApi } from "../services/api";
 import Layout from "../components/shared/Layout";
 import RiskMeter from "../components/shared/RiskMeter";
+import SubgraphView from "../components/shared/SubgraphView";
 
-const TX_TYPES = ["CASH_IN", "CASH_OUT", "DEBIT", "PAYMENT", "TRANSFER"];
-const INITIAL = {
-  step: "", type: "TRANSFER", amount: "",
-  nameOrig: "", oldbalanceOrg: "", newbalanceOrig: "",
-  nameDest: "", oldbalanceDest: "", newbalanceDest: "",
-};
-
-function Field({ label, children }) {
-  return (
-    <div>
-      <label className="field-label">{label}</label>
-      {children}
-    </div>
-  );
-}
+const LABEL_PILL = { illicit: "pill-red", licit: "pill-cyan", unknown: "pill-muted" };
 
 export default function PredictTransaction() {
-  const [form, setForm] = useState(INITIAL);
+  const [filter, setFilter] = useState("illicit");
+  const [search, setSearch] = useState("");
+  const [list, setList] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [loadingList, setLoadingList] = useState(true);
+
+  const [selected, setSelected] = useState(null);
+  const [model, setModel] = useState("rf");
   const [result, setResult] = useState(null);
+  const [subgraph, setSubgraph] = useState(null);
+  const [scoring, setScoring] = useState(false);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
 
-  const set = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
+  function loadList() {
+    setLoadingList(true);
+    transactionApi.list({ label: filter === "all" ? "" : filter, q: search.trim() })
+      .then((d) => { setList(d.transactions); setTotal(d.total); })
+      .finally(() => setLoadingList(false));
+  }
+  useEffect(() => { loadList(); /* eslint-disable-next-line */ }, [filter]);
 
-  async function handleSubmit(e) {
-    e.preventDefault();
+  async function analyze(tx, useModel = model) {
+    setSelected(tx);
+    setScoring(true);
     setError("");
     setResult(null);
-    setLoading(true);
     try {
-      const payload = {
-        ...form,
-        step: Number(form.step),
-        amount: Number(form.amount),
-        oldbalanceOrg: Number(form.oldbalanceOrg),
-        newbalanceOrig: Number(form.newbalanceOrig),
-        oldbalanceDest: Number(form.oldbalanceDest),
-        newbalanceDest: Number(form.newbalanceDest),
-      };
-      setResult(await predictionApi.submit(payload));
+      const [pred, sg] = await Promise.all([
+        predictionApi.submit({ tx_id: tx.tx_id, model: useModel }),
+        transactionApi.subgraph(tx.tx_id),
+      ]);
+      setResult(pred);
+      setSubgraph(sg);
     } catch (err) {
-      setError(err.message || "Analysis failed");
+      setError(err.message || "Scoring failed");
     } finally {
-      setLoading(false);
+      setScoring(false);
     }
   }
+
+  function switchModel(m) {
+    setModel(m);
+    if (selected) analyze(selected, m);
+  }
+
+  const Tab = ({ id, label }) => (
+    <button onClick={() => setFilter(id)}
+      className={`font-mono text-[11px] uppercase tracking-wide px-2.5 py-1.5 rounded-md transition-colors ${
+        filter === id ? "bg-cyan/12 text-cyan" : "text-muted hover:text-text"}`}>
+      {label}
+    </button>
+  );
 
   const isFraud = result?.prediction?.predicted_class === 1;
 
   return (
     <Layout eyebrow="Operations" title="Analyze Transaction">
-      <div className="grid lg:grid-cols-[1fr_400px] gap-6 items-start">
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="panel p-6">
-          <p className="eyebrow mb-1">Transaction record</p>
-          <h2 className="font-display font-bold tracking-tight mb-5">Enter the details to screen</h2>
-
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Step (time unit)">
-              <input className="input-mono" type="number" value={form.step} onChange={set("step")} required min="1" />
-            </Field>
-            <Field label="Type">
-              <select className="input" value={form.type} onChange={set("type")}>
-                {TX_TYPES.map((t) => <option key={t} className="bg-panel">{t}</option>)}
-              </select>
-            </Field>
+      <div className="grid lg:grid-cols-[380px_1fr] gap-6 items-start">
+        {/* Browser */}
+        <div className="panel overflow-hidden">
+          <div className="p-4 border-b border-line">
+            <p className="eyebrow mb-2">Browse the network · {total.toLocaleString()} txns</p>
+            <div className="flex gap-2 mb-3">
+              <input
+                className="input flex-1" placeholder="Search by tx ID…" value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && loadList()}
+              />
+              <button className="btn-ghost !px-3" onClick={loadList}>Go</button>
+            </div>
+            <div className="flex gap-1">
+              <Tab id="illicit" label="Illicit" />
+              <Tab id="licit" label="Licit" />
+              <Tab id="unknown" label="Unknown" />
+              <Tab id="all" label="All" />
+            </div>
           </div>
 
-          <div className="mt-4">
-            <Field label="Amount">
-              <input className="input-mono" type="number" step="0.01" value={form.amount} onChange={set("amount")} required min="0" />
-            </Field>
+          <div className="max-h-[520px] overflow-y-auto">
+            {loadingList ? (
+              <p className="p-5 text-muted font-mono text-sm">Loading…</p>
+            ) : list.length === 0 ? (
+              <p className="p-5 text-muted text-sm">No transactions match.</p>
+            ) : (
+              list.map((tx) => (
+                <button
+                  key={tx.tx_id}
+                  onClick={() => analyze(tx)}
+                  className={`w-full text-left px-4 py-3 border-b border-line-soft flex items-center justify-between gap-2 transition-colors ${
+                    selected?.tx_id === tx.tx_id ? "bg-cyan/10" : "hover:bg-panel-2/60"}`}
+                >
+                  <div>
+                    <p className="font-mono text-sm">{tx.tx_id}</p>
+                    <p className="font-mono text-[11px] text-muted">step {tx.time_step}</p>
+                  </div>
+                  <span className={LABEL_PILL[tx.label]}>{tx.label}</span>
+                </button>
+              ))
+            )}
           </div>
-
-          <div className="mt-6 mb-3 flex items-center gap-3">
-            <span className="eyebrow">Origin account</span>
-            <span className="h-px flex-1 bg-line" />
-          </div>
-          <div className="grid grid-cols-3 gap-4">
-            <Field label="Account ID">
-              <input className="input-mono" value={form.nameOrig} onChange={set("nameOrig")} placeholder="C1234…" />
-            </Field>
-            <Field label="Balance before">
-              <input className="input-mono" type="number" step="0.01" value={form.oldbalanceOrg} onChange={set("oldbalanceOrg")} />
-            </Field>
-            <Field label="Balance after">
-              <input className="input-mono" type="number" step="0.01" value={form.newbalanceOrig} onChange={set("newbalanceOrig")} />
-            </Field>
-          </div>
-
-          <div className="mt-6 mb-3 flex items-center gap-3">
-            <span className="eyebrow">Destination account</span>
-            <span className="h-px flex-1 bg-line" />
-          </div>
-          <div className="grid grid-cols-3 gap-4">
-            <Field label="Account ID">
-              <input className="input-mono" value={form.nameDest} onChange={set("nameDest")} placeholder="C9876…" />
-            </Field>
-            <Field label="Balance before">
-              <input className="input-mono" type="number" step="0.01" value={form.oldbalanceDest} onChange={set("oldbalanceDest")} />
-            </Field>
-            <Field label="Balance after">
-              <input className="input-mono" type="number" step="0.01" value={form.newbalanceDest} onChange={set("newbalanceDest")} />
-            </Field>
-          </div>
-
-          <button type="submit" disabled={loading} className="btn-primary w-full mt-7">
-            {loading ? "Screening…" : "Run fraud analysis"}
-          </button>
-        </form>
+        </div>
 
         {/* Readout */}
-        <div className="panel p-6 lg:sticky lg:top-24">
-          {error && (
-            <div className="panel-2 border-red/30 bg-red/10 px-4 py-3 text-sm text-red mb-4">{error}</div>
-          )}
-
-          {!result && !error && (
-            <div className="text-center py-10">
-              <p className="eyebrow mb-3">Awaiting input</p>
-              <p className="text-muted text-sm leading-relaxed">
-                Submit a transaction and the model returns a risk verdict with its
-                fraud probability here.
+        <div className="space-y-6">
+          {!selected && (
+            <div className="panel p-10 text-center">
+              <p className="eyebrow mb-3">Select a transaction</p>
+              <p className="text-muted text-sm max-w-md mx-auto leading-relaxed">
+                Pick a transaction from the network on the left. The model scores it and shows
+                its position in the Bitcoin transaction graph — you analyse real transactions,
+                you don't author them.
               </p>
-              <div className="mt-6 h-2.5 rounded-full opacity-30" style={{ background: "linear-gradient(90deg,#1FA892,#2DE1C2 30%,#F6B73C 65%,#FB5468)" }} />
             </div>
           )}
 
-          {result && (
-            <div>
-              <div className={`flex items-center gap-2 mb-5 ${isFraud ? "text-red" : "text-cyan"}`}>
-                <span className={`h-2.5 w-2.5 rounded-full ${isFraud ? "bg-red" : "bg-cyan"}`} style={{ boxShadow: `0 0 12px ${isFraud ? "#FB5468" : "#2DE1C2"}` }} />
-                <p className="font-display text-lg font-bold tracking-tight">
-                  {isFraud ? "Fraud detected" : "Transaction cleared"}
-                </p>
+          {selected && (
+            <>
+              <div className="panel p-6">
+                <div className="flex items-center justify-between mb-5">
+                  <div>
+                    <p className="eyebrow mb-1">Transaction</p>
+                    <p className="font-mono text-lg">{selected.tx_id}</p>
+                  </div>
+                  {/* Model toggle */}
+                  <div className="panel-2 inline-flex p-1">
+                    {["rf", "gnn"].map((m) => (
+                      <button key={m} onClick={() => switchModel(m)}
+                        className={`font-mono text-[11px] uppercase px-3 py-1.5 rounded-md transition-colors ${
+                          model === m ? "bg-cyan/15 text-cyan" : "text-muted hover:text-text"}`}>
+                        {m === "rf" ? "Random Forest" : "GraphSAGE"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {error && <div className="panel-2 border-red/30 bg-red/10 px-4 py-3 text-sm text-red mb-4">{error}</div>}
+
+                {scoring ? (
+                  <p className="text-muted font-mono text-sm py-8 text-center">Scoring…</p>
+                ) : result && (
+                  <>
+                    <div className={`flex items-center gap-2 mb-5 ${isFraud ? "text-red" : "text-cyan"}`}>
+                      <span className={`h-2.5 w-2.5 rounded-full ${isFraud ? "bg-red" : "bg-cyan"}`}
+                        style={{ boxShadow: `0 0 12px ${isFraud ? "#FB5468" : "#2DE1C2"}` }} />
+                      <p className="font-display text-lg font-bold tracking-tight">
+                        {isFraud ? "Flagged illicit" : "Cleared"}
+                      </p>
+                    </div>
+
+                    <RiskMeter score={result.prediction.fraud_probability} />
+
+                    <dl className="mt-6 grid grid-cols-2 gap-x-8 gap-y-2.5 font-mono text-[12px]">
+                      <div className="flex justify-between"><dt className="text-muted">RF score</dt><dd className="text-text">{(result.scores.rf_probability * 100).toFixed(1)}%</dd></div>
+                      <div className="flex justify-between"><dt className="text-muted">GNN score</dt><dd className="text-text">{(result.scores.gnn_probability * 100).toFixed(1)}%</dd></div>
+                      <div className="flex justify-between"><dt className="text-muted">Model used</dt><dd className="text-text">{result.prediction.model_type}</dd></div>
+                      <div className="flex justify-between">
+                        <dt className="text-muted">Ground truth</dt>
+                        <dd className={result.scores.true_label === "illicit" ? "text-red" : result.scores.true_label === "licit" ? "text-cyan" : "text-muted"}>
+                          {result.scores.true_label}
+                        </dd>
+                      </div>
+                    </dl>
+
+                    {result.alert && (
+                      <p className="mt-5 panel-2 border-amber/25 bg-amber/8 px-3 py-2.5 text-[12px] text-amber">
+                        Open alert #{result.alert.alert_id} created — review under Alerts.
+                      </p>
+                    )}
+                  </>
+                )}
               </div>
 
-              <RiskMeter score={result.prediction.fraud_probability} />
-
-              <dl className="mt-6 space-y-2.5 font-mono text-[12px]">
-                <div className="flex justify-between"><dt className="text-muted">Prediction ID</dt><dd>#{result.prediction.prediction_id}</dd></div>
-                <div className="flex justify-between"><dt className="text-muted">Transaction ID</dt><dd>#{result.transaction.transaction_id}</dd></div>
-                <div className="flex justify-between"><dt className="text-muted">Amount</dt><dd>{Number(result.transaction.amount).toLocaleString()}</dd></div>
-                {result.alert && (
-                  <div className="flex justify-between"><dt className="text-muted">Alert raised</dt><dd className="text-amber">#{result.alert.alert_id} · {result.alert.alert_status}</dd></div>
-                )}
-              </dl>
-
-              {result.alert && (
-                <p className="mt-5 panel-2 border-amber/25 bg-amber/8 px-3 py-2.5 text-[12px] text-amber">
-                  An open alert was created. Review it under Alerts to add notes and resolve.
-                </p>
+              {subgraph && !scoring && (
+                <div className="panel p-6">
+                  <SubgraphView data={subgraph} centerScore={result?.prediction?.fraud_probability ?? 0} />
+                </div>
               )}
-            </div>
+            </>
           )}
         </div>
       </div>
