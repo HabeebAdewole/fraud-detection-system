@@ -133,5 +133,5 @@ class ModelMetrics(db.Model):
             "recall": self.recall,
             "f1_score": self.f1_score,
             "auc_roc": self.auc_roc,
-            "evaluated_at": self.evaluated_at.isoformat(),
+            "evaluated_at": self.evaluated_at.isoformat() if self.evaluated_at else None,
         }
