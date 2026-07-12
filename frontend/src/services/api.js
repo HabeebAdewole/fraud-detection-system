@@ -42,6 +42,13 @@ export const predictionApi = {
     request(`/predictions/alerts/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
 };
 
+export const monitorApi = {
+  status: () => request("/monitor/status"),
+  advance: () => request("/monitor/advance", { method: "POST" }),
+  reset: (wipe = false) =>
+    request("/monitor/reset", { method: "POST", body: JSON.stringify({ wipe }) }),
+};
+
 export const reportApi = {
   generate: (payload) =>
     request("/reports/", { method: "POST", body: JSON.stringify(payload) }),
