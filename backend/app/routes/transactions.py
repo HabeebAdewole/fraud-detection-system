@@ -42,32 +42,65 @@ def get_transaction(tx_id):
     return jsonify(tx.to_dict()), 200
 
 
+MAX_HOP1 = 40   # cap first ring (hubs can have hundreds)
+MAX_HOP2 = 60   # cap second ring
+
+
+def _neighbours_of(tx_ids):
+    """All edges touching any tx in tx_ids -> (edge dicts, neighbour id set)."""
+    edges = Edge.query.filter(
+        or_(Edge.source_tx.in_(tx_ids), Edge.target_tx.in_(tx_ids))
+    ).limit(600).all()
+    edge_list, found = [], set()
+    for e in edges:
+        edge_list.append({"source": e.source_tx, "target": e.target_tx})
+        found.add(e.source_tx)
+        found.add(e.target_tx)
+    return edge_list, found
+
+
 @tx_bp.route("/<int:tx_id>/subgraph", methods=["GET"])
 @jwt_required()
 def subgraph(tx_id):
-    """The transaction plus its 1-hop neighbours and connecting edges."""
+    """The transaction plus its 2-hop neighbourhood (matches the GNN's
+    2-layer message-passing reach). Nodes carry their hop distance."""
     center = Transaction.query.get_or_404(tx_id)
 
-    edges = Edge.query.filter(
-        or_(Edge.source_tx == tx_id, Edge.target_tx == tx_id)
-    ).limit(200).all()
+    # Hop 1
+    edges1, found1 = _neighbours_of([tx_id])
+    hop1 = sorted(found1 - {tx_id})
+    total_hop1 = len(hop1)
+    hop1 = hop1[:MAX_HOP1]
 
-    neighbour_ids = set()
-    edge_list = []
-    for e in edges:
-        edge_list.append({"source": e.source_tx, "target": e.target_tx})
-        neighbour_ids.add(e.source_tx)
-        neighbour_ids.add(e.target_tx)
-    neighbour_ids.discard(tx_id)
+    # Hop 2 (neighbours of hop-1 nodes, excluding already-seen)
+    edges2, found2 = ([], set())
+    if hop1:
+        edges2, found2 = _neighbours_of(hop1)
+    hop2 = sorted(found2 - set(hop1) - {tx_id})
+    total_hop2 = len(hop2)
+    hop2 = hop2[:MAX_HOP2]
 
-    nodes = {tx_id: center.to_dict()}
-    if neighbour_ids:
-        for t in Transaction.query.filter(Transaction.tx_id.in_(neighbour_ids)).all():
-            nodes[t.tx_id] = t.to_dict()
+    keep = {tx_id} | set(hop1) | set(hop2)
+    edge_list, seen = [], set()
+    for e in edges1 + edges2:
+        key = (e["source"], e["target"])
+        if key in seen or e["source"] not in keep or e["target"] not in keep:
+            continue
+        seen.add(key)
+        edge_list.append(e)
+
+    hop_of = {tx_id: 0, **{t: 1 for t in hop1}, **{t: 2 for t in hop2}}
+    nodes = []
+    for t in Transaction.query.filter(Transaction.tx_id.in_(keep)).all():
+        d = t.to_dict()
+        d["hop"] = hop_of.get(t.tx_id, 2)
+        nodes.append(d)
 
     return jsonify({
         "center": tx_id,
-        "nodes": list(nodes.values()),
+        "nodes": nodes,
         "edges": edge_list,
-        "neighbour_count": len(neighbour_ids),
+        "neighbour_count": total_hop1,
+        "hop2_count": total_hop2,
+        "truncated": total_hop1 > MAX_HOP1 or total_hop2 > MAX_HOP2,
     }), 200
