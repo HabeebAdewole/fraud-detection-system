@@ -124,6 +124,21 @@ neighbours, no history. That's not a limitation; it's the design insight:
    note → resolve. "The human stays in the loop — exactly how commercial
    fraud operations work."
 
+## 6b. How to read the graph view (anticipate THIS question)
+
+**"Why does an illicit transaction have licit nodes around it?"**
+Because that's what laundering *is*. Dirty funds are only useful once spent,
+so every illicit flow must eventually touch legitimate services (exchanges,
+merchants). The licit nodes near an illicit transaction are the **exits** —
+the cash-out points — not evidence of innocence. Likewise most neighbours are
+grey (unknown) because launderers deliberately route through anonymous
+intermediaries (and 77% of the dataset is unlabeled anyway).
+
+Key line: *"Illicit transactions connecting to licit ones isn't a
+contradiction — it's the definition of money laundering. The GNN doesn't
+naively vote on neighbour labels; it learns the feature signature of 'funds
+fanning out through anonymous intermediaries toward exchange-like endpoints'."*
+
 ## 7. Honest limitations (owning these earns marks)
 
 - Elliptic's features are anonymised — I can't explain *what* feature 94
