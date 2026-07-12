@@ -58,6 +58,22 @@ export default function LiveMonitor() {
     clearInterval(timerRef.current);
   }
 
+  async function reset() {
+    if (!window.confirm("Rewind the replay to step 34 and clear monitor-generated alerts?")) return;
+    stop();
+    setBusy(true);
+    setError("");
+    try {
+      await monitorApi.reset(true);
+      setFeed([]);
+      setStatus(await monitorApi.status());
+    } catch (e) {
+      setError(e.message || "Reset failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const progress = status ? ((status.last_step - 34) / (status.final_step - 34)) * 100 : 0;
 
   return (
@@ -101,6 +117,11 @@ export default function LiveMonitor() {
                   </button>
                 )}
                 {status.done && <span className="pill-cyan">Replay complete — step 49 reached</span>}
+                {!playing && (status.done || status.last_step > 34) && (
+                  <button onClick={reset} disabled={busy} className="btn-danger">
+                    ↺ Reset replay
+                  </button>
+                )}
               </div>
             </div>
 

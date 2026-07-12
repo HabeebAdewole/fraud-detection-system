@@ -112,9 +112,11 @@ def advance():
 
 @monitor_bp.route("/reset", methods=["POST"])
 @jwt_required()
-@role_required("admin")
+@role_required("analyst", "admin")
 def reset():
-    """Rewind the replay to the start of the test period (keeps alerts unless wipe=true)."""
+    """Rewind the replay to the start of the test period (keeps alerts unless
+    wipe=true). Open to analysts: this controls the replay simulation, not
+    production data."""
     s = _state()
     s.last_step = START_STEP
     if (request.get_json(silent=True) or {}).get("wipe"):
