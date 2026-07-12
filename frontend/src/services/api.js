@@ -1,4 +1,4 @@
-const BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 function getToken() {
   return localStorage.getItem("token");
@@ -26,8 +26,10 @@ export const authApi = {
 };
 
 export const transactionApi = {
-  list: (page = 1) => request(`/transactions/?page=${page}`),
+  list: ({ page = 1, label = "", q = "" } = {}) =>
+    request(`/transactions/?page=${page}${label ? `&label=${label}` : ""}${q ? `&q=${q}` : ""}`),
   get: (id) => request(`/transactions/${id}`),
+  subgraph: (id) => request(`/transactions/${id}/subgraph`),
 };
 
 export const predictionApi = {

@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { adminApi } from "../services/api";
-import Navbar from "../components/shared/Navbar";
+import Layout from "../components/shared/Layout";
 
 const BLANK = { username: "", email: "", password: "", role: "analyst" };
-const inputCls = "w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
 
 export default function AdminUsers() {
   const [users, setUsers] = useState([]);
@@ -11,82 +10,95 @@ export default function AdminUsers() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  useEffect(() => { adminApi.listUsers().then(d => setUsers(d.users)); }, []);
+  useEffect(() => {
+    adminApi.listUsers().then((d) => setUsers(d.users));
+  }, []);
 
-  function set(field) { return e => setForm(f => ({ ...f, [field]: e.target.value })); }
+  const set = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
 
   async function handleCreate(e) {
     e.preventDefault();
     setError(""); setSuccess("");
     try {
       const user = await adminApi.createUser(form);
-      setUsers(prev => [...prev, user]);
+      setUsers((prev) => [...prev, user]);
       setForm(BLANK);
-      setSuccess("User created successfully.");
-    } catch (err) { setError(err.message); }
+      setSuccess(`${user.username} added as ${user.role}.`);
+    } catch (err) {
+      setError(err.message);
+    }
   }
 
   async function handleDelete(userId) {
-    if (!window.confirm("Delete this user?")) return;
+    if (!window.confirm("Delete this account? This cannot be undone.")) return;
     await adminApi.deleteUser(userId);
-    setUsers(prev => prev.filter(u => u.user_id !== userId));
+    setUsers((prev) => prev.filter((u) => u.user_id !== userId));
   }
 
   return (
-    <div className="min-h-screen bg-slate-900">
-      <Navbar />
-      <div className="max-w-5xl mx-auto p-6">
-        <h2 className="text-white text-2xl font-bold mb-6">User Management</h2>
+    <Layout
+      eyebrow="Administration"
+      title="User Accounts"
+      actions={<span className="pill-muted">{users.length} accounts</span>}
+    >
+      <div className="grid lg:grid-cols-[360px_1fr] gap-6 items-start">
+        <form onSubmit={handleCreate} className="panel p-6">
+          <p className="eyebrow mb-1">New account</p>
+          <h2 className="font-display font-bold tracking-tight mb-5">Add a team member</h2>
 
-        <div className="bg-slate-800 border border-slate-700 rounded-xl p-5 mb-8">
-          <h3 className="text-white font-semibold mb-4">Create New User</h3>
-          {error && <p className="text-red-400 text-sm mb-3">{error}</p>}
-          {success && <p className="text-green-400 text-sm mb-3">{success}</p>}
-          <form onSubmit={handleCreate} className="grid grid-cols-2 gap-4">
-            <div><label className="block text-slate-400 text-xs mb-1">Username</label><input className={inputCls} value={form.username} onChange={set("username")} required /></div>
-            <div><label className="block text-slate-400 text-xs mb-1">Email</label><input type="email" className={inputCls} value={form.email} onChange={set("email")} required /></div>
-            <div><label className="block text-slate-400 text-xs mb-1">Password</label><input type="password" className={inputCls} value={form.password} onChange={set("password")} required minLength={6} /></div>
+          {error && <div className="panel-2 border-red/30 bg-red/10 px-4 py-3 text-sm text-red mb-4">{error}</div>}
+          {success && <div className="panel-2 border-cyan/30 bg-cyan/10 px-4 py-3 text-sm text-cyan mb-4">{success}</div>}
+
+          <div className="space-y-4">
+            <div><label className="field-label">Username</label><input className="input" value={form.username} onChange={set("username")} required /></div>
+            <div><label className="field-label">Email</label><input type="email" className="input" value={form.email} onChange={set("email")} required /></div>
+            <div><label className="field-label">Password</label><input type="password" className="input" value={form.password} onChange={set("password")} required minLength={6} /></div>
             <div>
-              <label className="block text-slate-400 text-xs mb-1">Role</label>
-              <select className={inputCls} value={form.role} onChange={set("role")}>
-                <option value="analyst">Analyst</option>
-                <option value="admin">Admin</option>
+              <label className="field-label">Role</label>
+              <select className="input" value={form.role} onChange={set("role")}>
+                <option value="analyst" className="bg-panel">Fraud Analyst</option>
+                <option value="admin" className="bg-panel">System Administrator</option>
               </select>
             </div>
-            <div className="col-span-2">
-              <button className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-semibold transition-colors">Create User</button>
-            </div>
-          </form>
-        </div>
+            <button className="btn-primary w-full">Create account</button>
+          </div>
+        </form>
 
-        <h3 className="text-white font-semibold mb-3">All Users</h3>
-        <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
-          <table className="w-full text-sm text-slate-300">
-            <thead className="text-slate-400 border-b border-slate-700">
-              <tr>
-                {["ID", "Username", "Email", "Role", "Created", "Actions"].map(h => (
-                  <th key={h} className="text-left px-4 py-3 font-medium">{h}</th>
+        <div className="panel overflow-hidden">
+          <div className="px-5 py-4 border-b border-line">
+            <p className="eyebrow mb-1">Directory</p>
+            <h2 className="font-display font-bold tracking-tight">All accounts</h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="data-table">
+              <thead>
+                <tr><th>ID</th><th>Username</th><th>Email</th><th>Role</th><th>Created</th><th></th></tr>
+              </thead>
+              <tbody>
+                {users.map((u) => (
+                  <tr key={u.user_id}>
+                    <td className="font-mono text-muted">#{u.user_id}</td>
+                    <td className="font-medium">{u.username}</td>
+                    <td className="text-muted">{u.email}</td>
+                    <td>
+                      <span className={u.role === "admin" ? "pill-cyan" : "pill-muted"}>{u.role}</span>
+                    </td>
+                    <td className="font-mono text-[12px] text-muted">{new Date(u.created_at).toLocaleDateString()}</td>
+                    <td className="text-right">
+                      <button onClick={() => handleDelete(u.user_id)} className="font-mono text-[11px] text-muted hover:text-red transition-colors">
+                        DELETE
+                      </button>
+                    </td>
+                  </tr>
                 ))}
-              </tr>
-            </thead>
-            <tbody>
-              {users.map(u => (
-                <tr key={u.user_id} className="border-b border-slate-700 hover:bg-slate-700/40">
-                  <td className="px-4 py-3">{u.user_id}</td>
-                  <td className="px-4 py-3">{u.username}</td>
-                  <td className="px-4 py-3">{u.email}</td>
-                  <td className="px-4 py-3 capitalize">{u.role}</td>
-                  <td className="px-4 py-3 text-slate-500">{new Date(u.created_at).toLocaleDateString()}</td>
-                  <td className="px-4 py-3">
-                    <button onClick={() => handleDelete(u.user_id)} className="text-red-400 hover:text-red-300 text-xs">Delete</button>
-                  </td>
-                </tr>
-              ))}
-              {users.length === 0 && <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-500">No users found</td></tr>}
-            </tbody>
-          </table>
+                {users.length === 0 && (
+                  <tr><td colSpan={6} className="text-center py-12 text-muted">No accounts found</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
-    </div>
+    </Layout>
   );
 }

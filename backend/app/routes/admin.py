@@ -72,16 +72,11 @@ def delete_user(user_id):
 @jwt_required()
 @role_required("admin")
 def get_metrics():
-    metrics = ModelMetrics.query.order_by(ModelMetrics.evaluated_at.desc()).first()
-    if not metrics and os.path.exists(METRICS_PATH):
-        with open(METRICS_PATH) as f:
-            data = json.load(f)
-        metrics = ModelMetrics(**{k: v for k, v in data.items()})
-        db.session.add(metrics)
-        db.session.commit()
-    if not metrics:
+    """Return all trained models (RF, GNN, combined) for comparison."""
+    rows = ModelMetrics.query.order_by(ModelMetrics.f1_score.desc()).all()
+    if not rows:
         return jsonify({"error": "No metrics available. Run the training pipeline first."}), 404
-    return jsonify(metrics.to_dict()), 200
+    return jsonify({"models": [m.to_dict() for m in rows]}), 200
 
 
 @admin_bp.route("/metrics", methods=["POST"])

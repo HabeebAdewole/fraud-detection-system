@@ -33,7 +33,7 @@ def _build_rows(start: date, end: date):
 @role_required("analyst", "admin")
 def generate_report():
     data = request.get_json()
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     start = date.fromisoformat(data["date_range_start"])
     end = date.fromisoformat(data["date_range_end"])
     report_type = data.get("report_type", "fraud_summary")
