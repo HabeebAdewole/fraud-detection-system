@@ -28,19 +28,6 @@ def me():
     return jsonify(user.to_dict()), 200
 
 
-@auth_bp.route("/register", methods=["POST"])
-def register():
-    """Used by admin to seed initial accounts; remove or protect in production."""
-    data = request.get_json()
-    if User.query.filter_by(username=data["username"]).first():
-        return jsonify({"error": "Username already exists"}), 409
-    hashed = bcrypt.generate_password_hash(data["password"]).decode("utf-8")
-    user = User(
-        username=data["username"],
-        email=data["email"],
-        password_hash=hashed,
-        role=data.get("role", "analyst"),
-    )
-    db.session.add(user)
-    db.session.commit()
-    return jsonify(user.to_dict()), 201
+# NOTE: there is deliberately no open /register endpoint. Initial accounts are
+# seeded with backend/seed_users.py; afterwards only admins can create users
+# via POST /api/admin/users (JWT + role check).
