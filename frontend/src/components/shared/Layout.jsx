@@ -6,6 +6,7 @@ import {
 
 const ANALYST_NAV = [
   { to: "/dashboard", label: "Overview", Icon: IconGrid },
+  { to: "/monitor", label: "Live Monitor", Icon: IconPulse },
   { to: "/predict", label: "Analyze Transaction", Icon: IconScan },
   { to: "/alerts", label: "Alerts", Icon: IconAlert },
   { to: "/reports", label: "Reports", Icon: IconReport },

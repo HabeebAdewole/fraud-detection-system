@@ -87,6 +87,14 @@ class Alert(db.Model):
         }
 
 
+class MonitorState(db.Model):
+    """Replay-monitoring position: the last time step that has been screened."""
+    __tablename__ = "monitor_state"
+    id             = db.Column(db.Integer, primary_key=True)
+    last_step      = db.Column(db.Integer, nullable=False, default=34)
+    updated_at     = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class Report(db.Model):
     __tablename__ = "report"
     report_id       = db.Column(db.Integer, primary_key=True)

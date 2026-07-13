@@ -104,6 +104,21 @@ neighbours, no history. That's not a limitation; it's the design insight:
 - It mirrors production reality: real systems score transactions arriving
   from the payment stream, not values typed into a form.
 
+## 5b. Live Monitor — how the system MONITORS, not just detects
+
+The **Live Monitor** page replays the test period (steps 35–49) as a live
+stream: each step's transactions "arrive" and are **screened automatically —
+no analyst clicking**. Any transaction either model flags (RF ≥ 0.9, GNN ≥
+0.99 — per-model bars because GNN probabilities run overconfident) crosses
+the threshold; the **top 25 by score become alerts** (an "alert budget",
+mirroring how real ops floors ration analyst capacity — say this, it's an
+industry-standard concept). The feed reports every step: screened count,
+crossings, alerts raised, and which model caught what.
+
+If asked "is this real-time?": *"It's a replay of the dataset's own timeline —
+in production the stream would be a live payment feed; the screening logic is
+identical."*
+
 ## 6. Demo script (5 minutes)
 
 1. **Login** as `analyst` → the Overview console loads.

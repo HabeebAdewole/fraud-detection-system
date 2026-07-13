@@ -25,12 +25,14 @@ def create_app(config=None):
     from app.routes.predictions import pred_bp
     from app.routes.reports import report_bp
     from app.routes.admin import admin_bp
+    from app.routes.monitor import monitor_bp
 
-    app.register_blueprint(auth_bp,   url_prefix="/api/auth")
-    app.register_blueprint(tx_bp,     url_prefix="/api/transactions")
-    app.register_blueprint(pred_bp,   url_prefix="/api/predictions")
-    app.register_blueprint(report_bp, url_prefix="/api/reports")
-    app.register_blueprint(admin_bp,  url_prefix="/api/admin")
+    app.register_blueprint(auth_bp,    url_prefix="/api/auth")
+    app.register_blueprint(tx_bp,      url_prefix="/api/transactions")
+    app.register_blueprint(pred_bp,    url_prefix="/api/predictions")
+    app.register_blueprint(report_bp,  url_prefix="/api/reports")
+    app.register_blueprint(admin_bp,   url_prefix="/api/admin")
+    app.register_blueprint(monitor_bp, url_prefix="/api/monitor")
 
     with app.app_context():
         db.create_all()

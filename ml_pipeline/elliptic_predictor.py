@@ -33,6 +33,39 @@ def exists(tx_id: int) -> bool:
     return int(tx_id) in _index
 
 
+def screen_step(time_step: int, rf_threshold: float = 0.9, gnn_threshold: float = 0.99) -> dict:
+    """Batch-screen every transaction in a time step (vectorized).
+    Returns summary counts plus the flagged transactions with per-model scores.
+    A transaction is flagged when EITHER model crosses ITS OWN threshold —
+    per-model bars because the GNN's probabilities run overconfident, so its
+    bar sits higher to keep alert precision comparable."""
+    _load()
+    steps = _bundle["time_step"]
+    mask = steps == int(time_step)
+    idxs = np.where(mask)[0]
+    if len(idxs) == 0:
+        return {"time_step": int(time_step), "screened": 0, "flagged": []}
+
+    X = _scaler.transform(_bundle["X"][idxs])
+    rf_probs = _rf.predict_proba(X)[:, 1]
+    gnn_probs = _bundle["gnn_prob"][idxs]
+
+    flagged = []
+    for j, i in enumerate(idxs):
+        rf_p, gnn_p = float(rf_probs[j]), float(gnn_probs[j])
+        rf_hit, gnn_hit = rf_p >= rf_threshold, gnn_p >= gnn_threshold
+        if rf_hit or gnn_hit:
+            by = "both" if (rf_hit and gnn_hit) else ("rf" if rf_hit else "gnn")
+            flagged.append({
+                "tx_id": int(_bundle["tx_ids"][i]),
+                "rf_probability": round(rf_p, 4),
+                "gnn_probability": round(gnn_p, 4),
+                "flagged_by": by,
+                "true_label": str(_bundle["label"][i]),
+            })
+    return {"time_step": int(time_step), "screened": int(len(idxs)), "flagged": flagged}
+
+
 def predict(tx_id: int, model: str = "rf") -> dict:
     """model: 'rf' or 'gnn'. Returns predicted_class + probability + both scores."""
     _load()

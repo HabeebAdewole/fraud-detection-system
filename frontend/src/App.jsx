@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import Login from "./pages/Login";
 import AnalystDashboard from "./pages/AnalystDashboard";
 import PredictTransaction from "./pages/PredictTransaction";
+import LiveMonitor from "./pages/LiveMonitor";
 import Alerts from "./pages/Alerts";
 import Reports from "./pages/Reports";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -25,6 +26,7 @@ export default function App() {
 
           {/* Analyst routes */}
           <Route path="/dashboard" element={<RequireAuth role="analyst"><AnalystDashboard /></RequireAuth>} />
+          <Route path="/monitor"   element={<RequireAuth role="analyst"><LiveMonitor /></RequireAuth>} />
           <Route path="/predict"   element={<RequireAuth role="analyst"><PredictTransaction /></RequireAuth>} />
           <Route path="/alerts"    element={<RequireAuth role="analyst"><Alerts /></RequireAuth>} />
           <Route path="/reports"   element={<RequireAuth role="analyst"><Reports /></RequireAuth>} />
