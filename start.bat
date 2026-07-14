@@ -1,6 +1,6 @@
 @echo off
 REM ============================================================
-REM  Sentinel Fraud Detection - one-click launcher (Windows)
+REM  Tracer Fraud Detection - one-click launcher (Windows)
 REM  Starts MySQL, the Flask backend, and the React frontend.
 REM ============================================================
 
@@ -16,11 +16,11 @@ if errorlevel 1 (
 timeout /t 5 /nobreak >nul
 
 echo [2/3] Starting Flask backend on http://localhost:5000 ...
-start "Sentinel Backend" cmd /k "cd /d %~dp0backend && venv\Scripts\python.exe run.py"
+start "Tracer Backend" cmd /k "cd /d %~dp0backend && venv\Scripts\python.exe run.py"
 timeout /t 3 /nobreak >nul
 
 echo [3/3] Starting React frontend on http://localhost:5173 ...
-start "Sentinel Frontend" cmd /k "cd /d %~dp0frontend && npm run dev"
+start "Tracer Frontend" cmd /k "cd /d %~dp0frontend && npm run dev"
 
 echo.
 echo All three services starting. Give it ~10 seconds, then open:

@@ -19,7 +19,8 @@ models/metrics.json
 models/features.json
 models/elliptic_*.json
 
-# Data
+# Data (datasets are downloaded locally, never committed)
+data/**/*.csv
 data/*.csv
 data/*.zip
 
@@ -40,3 +41,7 @@ dist/
 # OS
 .DS_Store
 Thumbs.db
+
+# Playwright MCP artifacts
+.playwright-mcp/
+*.jpeg

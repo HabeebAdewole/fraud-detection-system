@@ -5,9 +5,9 @@
  * Nodes are coloured by their known label.
  */
 const COLOR = {
-  illicit: "#FB5468",
-  licit: "#2DE1C2",
-  unknown: "#5B6478",
+  illicit: "#E5484D",
+  licit: "#2B44E8",
+  unknown: "#B4B8C0",
 };
 
 function ringPositions(items, cx, cy, radius, phase = 0) {
@@ -34,7 +34,7 @@ export default function SubgraphView({ data, centerScore }) {
   };
 
   const centerColor =
-    centerScore >= 0.7 ? COLOR.illicit : centerScore >= 0.4 ? "#F6B73C" : COLOR.licit;
+    centerScore >= 0.7 ? COLOR.illicit : centerScore >= 0.4 ? "#E0870B" : COLOR.licit;
 
   const drawable = edges.filter((e) => pos[e.source] && pos[e.target]);
 
@@ -49,15 +49,15 @@ export default function SubgraphView({ data, centerScore }) {
 
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Transaction network graph">
         {/* faint ring guides */}
-        <circle cx={cx} cy={cy} r="95" fill="none" stroke="#1B2230" strokeWidth="1" />
-        <circle cx={cx} cy={cy} r="165" fill="none" stroke="#1B2230" strokeWidth="1" strokeDasharray="3 5" />
+        <circle cx={cx} cy={cy} r="95" fill="none" stroke="#E6E4E0" strokeWidth="1" />
+        <circle cx={cx} cy={cy} r="165" fill="none" stroke="#E6E4E0" strokeWidth="1" strokeDasharray="3 5" />
 
         {/* edges */}
         {drawable.map((e, i) => {
           const a = pos[e.source], b = pos[e.target];
           return (
             <line key={i} x1={a.x} y1={a.y} x2={b.x} y2={b.y}
-              stroke="#232C3C" strokeWidth={e.source === center || e.target === center ? 1.6 : 0.8}
+              stroke="#D8D6D2" strokeWidth={e.source === center || e.target === center ? 1.6 : 0.8}
               opacity={e.source === center || e.target === center ? 1 : 0.7} />
           );
         })}

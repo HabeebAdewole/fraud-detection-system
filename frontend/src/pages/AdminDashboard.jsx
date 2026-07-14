@@ -9,7 +9,7 @@ const PRETTY = {
 };
 
 function bar(pct) {
-  const color = pct >= 90 ? "#2DE1C2" : pct >= 70 ? "#F6B73C" : "#FB5468";
+  const color = pct >= 90 ? "#2B44E8" : pct >= 70 ? "#E0870B" : "#E5484D";
   return (
     <div className="h-1.5 rounded-full bg-line overflow-hidden mt-1.5">
       <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color }} />
@@ -43,7 +43,7 @@ export default function AdminDashboard() {
         <div className="space-y-7">
           {/* Headline */}
           <div className="panel p-7 relative overflow-hidden">
-            <div className="absolute inset-0" style={{ background: "radial-gradient(500px 200px at 90% 0%, rgba(45,225,194,0.08), transparent 60%)" }} />
+            <div className="absolute inset-0" style={{ background: "radial-gradient(500px 200px at 90% 0%, rgba(43,68,232,0.06), transparent 60%)" }} />
             <div className="relative">
               <p className="eyebrow mb-2">Best model · illicit F1</p>
               <p className="font-mono text-6xl font-semibold text-cyan leading-none">

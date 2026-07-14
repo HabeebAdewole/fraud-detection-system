@@ -150,7 +150,7 @@ export default function PredictTransaction() {
                   <>
                     <div className={`flex items-center gap-2 mb-5 ${isFraud ? "text-red" : "text-cyan"}`}>
                       <span className={`h-2.5 w-2.5 rounded-full ${isFraud ? "bg-red" : "bg-cyan"}`}
-                        style={{ boxShadow: `0 0 12px ${isFraud ? "#FB5468" : "#2DE1C2"}` }} />
+                        style={{ boxShadow: `0 0 10px ${isFraud ? "#E5484D" : "#2B44E8"}` }} />
                       <p className="font-display text-lg font-bold tracking-tight">
                         {isFraud ? "Flagged illicit" : "Cleared"}
                       </p>

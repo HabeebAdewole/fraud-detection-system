@@ -1,4 +1,4 @@
-# Sentinel — ML-Based Financial Fraud Detection System
+# Tracer — ML-Based Financial Fraud Detection System
 BSc Computer Science Final Year Project — Crescent University, Abeokuta
 
 A web-based anti-money-laundering console for the Bitcoin blockchain. Two
@@ -26,7 +26,7 @@ The RF result reproduces the published benchmark (Weber et al. report ≈0.79 F1
 ## Architecture
 
 ```
-React + Tailwind ("Sentinel" console)        Presentation
+React + Tailwind ("Tracer" console)        Presentation
   Login · Overview · Live Monitor · Analyze (2-hop graph view)
   Alerts · Reports · Admin (users, model benchmark)
         │  JWT (role-based: analyst / admin)

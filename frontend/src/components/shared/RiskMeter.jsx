@@ -5,9 +5,9 @@
  */
 
 function zone(score) {
-  if (score >= 0.7) return { label: "High Risk", color: "text-red", line: "#FB5468" };
-  if (score >= 0.4) return { label: "Elevated", color: "text-amber", line: "#F6B73C" };
-  return { label: "Cleared", color: "text-cyan", line: "#2DE1C2" };
+  if (score >= 0.7) return { label: "High Risk", color: "text-red", line: "#E5484D" };
+  if (score >= 0.4) return { label: "Elevated", color: "text-amber", line: "#E0870B" };
+  return { label: "Cleared", color: "text-cyan", line: "#2B44E8" };
 }
 
 export default function RiskMeter({ score, size = "lg" }) {
@@ -36,8 +36,7 @@ export default function RiskMeter({ score, size = "lg" }) {
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(90deg, #1FA892 0%, #2DE1C2 28%, #F6B73C 62%, #FB5468 100%)",
-            opacity: 0.85,
+              "linear-gradient(90deg, #2B44E8 0%, #6E7CF0 32%, #E0870B 66%, #E5484D 100%)",
           }}
         />
       </div>

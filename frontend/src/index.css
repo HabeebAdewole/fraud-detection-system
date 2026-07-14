@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    color-scheme: dark;
+    color-scheme: light;
   }
 
   html,
@@ -15,80 +15,74 @@
 
   body {
     @apply bg-ink text-text font-sans antialiased;
-    background-image:
-      radial-gradient(900px 500px at 100% -10%, rgba(45, 225, 194, 0.06), transparent 60%),
-      radial-gradient(700px 500px at -10% 110%, rgba(251, 84, 104, 0.05), transparent 60%);
-    background-attachment: fixed;
   }
 
-  /* Tabular figures everywhere numbers appear */
   .font-mono {
     font-variant-numeric: tabular-nums;
   }
 
   ::selection {
-    background: rgba(45, 225, 194, 0.25);
+    background: rgba(43, 68, 232, 0.16);
   }
 
-  /* Refined scrollbar */
   * {
     scrollbar-width: thin;
-    scrollbar-color: #2a3346 transparent;
+    scrollbar-color: #d8d6d2 transparent;
   }
   *::-webkit-scrollbar {
     width: 10px;
     height: 10px;
   }
   *::-webkit-scrollbar-thumb {
-    background: #2a3346;
+    background: #d8d6d2;
     border-radius: 999px;
     border: 2px solid transparent;
     background-clip: padding-box;
   }
 
   *:focus-visible {
-    outline: 2px solid rgba(45, 225, 194, 0.7);
+    outline: 2px solid rgba(43, 68, 232, 0.55);
     outline-offset: 2px;
-    border-radius: 4px;
+    border-radius: 6px;
   }
 }
 
 @layer components {
   /* Surfaces */
   .panel {
-    @apply rounded-xl border border-line bg-panel shadow-panel;
+    @apply rounded-lg border border-line bg-panel shadow-panel;
   }
   .panel-2 {
     @apply rounded-lg border border-line bg-panel-2;
   }
 
-  /* Eyebrow / section labels — encode structure, not decoration */
+  /* Eyebrow / section labels */
   .eyebrow {
     @apply font-mono text-[11px] uppercase tracking-eyebrow text-muted;
   }
 
   /* Buttons */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold
            transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
   }
   .btn-primary {
-    @apply btn bg-cyan text-ink hover:bg-[#3eecce] font-semibold;
+    @apply btn bg-cyan text-white hover:bg-cyan-dim;
   }
   .btn-ghost {
-    @apply btn border border-line text-text;
+    @apply btn border border-line text-text bg-panel;
   }
   .btn-ghost:hover {
-    border-color: rgba(45, 225, 194, 0.5);
-    color: #2de1c2;
+    border-color: rgba(43, 68, 232, 0.5);
+    color: #2b44e8;
   }
   .btn-danger {
     @apply btn text-red;
-    background: rgba(251, 84, 104, 0.15);
-    border: 1px solid rgba(251, 84, 104, 0.3);
+    background: rgba(229, 72, 77, 0.1);
+    border: 1px solid rgba(229, 72, 77, 0.28);
   }
   .btn-danger:hover {
-    background: rgba(251, 84, 104, 0.25);
+    background: rgba(229, 72, 77, 0.16);
   }
 
   /* Inputs */
@@ -96,9 +90,12 @@
     @apply block text-[12px] font-medium text-muted mb-1.5;
   }
   .input {
-    @apply w-full rounded-lg border border-line bg-ink/60 px-3 py-2.5 text-sm text-text
-           placeholder:text-muted/60 transition-colors
-           focus:border-cyan/60 focus:bg-ink focus:outline-none;
+    @apply w-full rounded-lg border border-line bg-panel px-3 py-2.5 text-sm text-text
+           placeholder:text-muted/70 transition-colors
+           focus:border-cyan focus:outline-none;
+  }
+  .input:focus {
+    box-shadow: 0 0 0 3px rgba(43, 68, 232, 0.12);
   }
   .input-mono {
     @apply input font-mono;
@@ -110,19 +107,19 @@
   }
   .pill-cyan {
     @apply pill text-cyan;
-    background: rgba(45, 225, 194, 0.12);
+    background: rgba(43, 68, 232, 0.1);
   }
   .pill-amber {
     @apply pill text-amber;
-    background: rgba(246, 183, 60, 0.12);
+    background: rgba(224, 135, 11, 0.12);
   }
   .pill-red {
     @apply pill text-red;
-    background: rgba(251, 84, 104, 0.12);
+    background: rgba(229, 72, 77, 0.1);
   }
   .pill-muted {
     @apply pill text-muted;
-    background: rgba(126, 135, 155, 0.12);
+    background: rgba(107, 114, 128, 0.1);
   }
 
   /* Data tables */
@@ -137,7 +134,7 @@
     @apply px-4 py-3 border-b border-line-soft text-text/90;
   }
   .data-table tbody tr {
-    @apply transition-colors hover:bg-panel-2/60;
+    @apply transition-colors hover:bg-panel-2/70;
   }
 }
 

@@ -1,4 +1,4 @@
-# Sentinel — Plain-English Project Explainer
+# Tracer — Plain-English Project Explainer
 *Read this twice and you can defend every layer of the system.*
 
 ---
@@ -81,7 +81,7 @@ Three-tier architecture:
 
 | Tier | Tech | What it does |
 |---|---|---|
-| Presentation | React + Tailwind ("Sentinel" console) | Login, browse/search transactions, score them, see the network graph, manage alerts, reports, admin |
+| Presentation | React + Tailwind ("Tracer" console) | Login, browse/search transactions, score them, see the network graph, manage alerts, reports, admin |
 | Application | Flask REST API + JWT auth | Auth service, transaction service, ML prediction service (loads both models), report service |
 | Data | MySQL + model artifacts | 203k transactions, 234k edges, predictions, alerts, users, model metrics |
 
