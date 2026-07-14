@@ -3,13 +3,43 @@
 @tailwind utilities;
 
 @layer base {
+  /* Light theme (default) */
   :root {
+    --c-ink: 246 246 244;
+    --c-panel: 255 255 255;
+    --c-panel-2: 242 241 238;
+    --c-line: 230 228 224;
+    --c-line-soft: 239 237 234;
+    --c-text: 11 12 14;
+    --c-muted: 107 114 128;
+    --c-cyan: 43 68 232;
+    --c-cyan-dim: 30 51 196;
+    --c-amber: 224 135 11;
+    --c-amber-dim: 178 108 9;
+    --c-red: 229 72 77;
+    --c-red-dim: 193 50 57;
     color-scheme: light;
   }
 
-  html,
-  body,
-  #root {
+  /* Dark theme */
+  .dark {
+    --c-ink: 11 15 23;
+    --c-panel: 19 25 38;
+    --c-panel-2: 27 34 48;
+    --c-line: 38 48 63;
+    --c-line-soft: 30 39 51;
+    --c-text: 234 237 243;
+    --c-muted: 138 147 166;
+    --c-cyan: 118 140 255;
+    --c-cyan-dim: 96 118 235;
+    --c-amber: 245 176 60;
+    --c-amber-dim: 210 140 30;
+    --c-red: 251 110 115;
+    --c-red-dim: 220 80 86;
+    color-scheme: dark;
+  }
+
+  html, body, #root {
     height: 100%;
   }
 
@@ -22,26 +52,23 @@
   }
 
   ::selection {
-    background: rgba(43, 68, 232, 0.16);
+    background: rgb(var(--c-cyan) / 0.18);
   }
 
   * {
     scrollbar-width: thin;
-    scrollbar-color: #d8d6d2 transparent;
+    scrollbar-color: rgb(var(--c-line)) transparent;
   }
-  *::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
-  }
+  *::-webkit-scrollbar { width: 10px; height: 10px; }
   *::-webkit-scrollbar-thumb {
-    background: #d8d6d2;
+    background: rgb(var(--c-line));
     border-radius: 999px;
     border: 2px solid transparent;
     background-clip: padding-box;
   }
 
   *:focus-visible {
-    outline: 2px solid rgba(43, 68, 232, 0.55);
+    outline: 2px solid rgb(var(--c-cyan) / 0.55);
     outline-offset: 2px;
     border-radius: 6px;
   }
@@ -73,16 +100,16 @@
     @apply btn border border-line text-text bg-panel;
   }
   .btn-ghost:hover {
-    border-color: rgba(43, 68, 232, 0.5);
-    color: #2b44e8;
+    border-color: rgb(var(--c-cyan) / 0.5);
+    color: rgb(var(--c-cyan));
   }
   .btn-danger {
     @apply btn text-red;
-    background: rgba(229, 72, 77, 0.1);
-    border: 1px solid rgba(229, 72, 77, 0.28);
+    background: rgb(var(--c-red) / 0.1);
+    border: 1px solid rgb(var(--c-red) / 0.28);
   }
   .btn-danger:hover {
-    background: rgba(229, 72, 77, 0.16);
+    background: rgb(var(--c-red) / 0.16);
   }
 
   /* Inputs */
@@ -95,7 +122,7 @@
            focus:border-cyan focus:outline-none;
   }
   .input:focus {
-    box-shadow: 0 0 0 3px rgba(43, 68, 232, 0.12);
+    box-shadow: 0 0 0 3px rgb(var(--c-cyan) / 0.12);
   }
   .input-mono {
     @apply input font-mono;
@@ -105,27 +132,13 @@
   .pill {
     @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-mono font-medium uppercase tracking-wide;
   }
-  .pill-cyan {
-    @apply pill text-cyan;
-    background: rgba(43, 68, 232, 0.1);
-  }
-  .pill-amber {
-    @apply pill text-amber;
-    background: rgba(224, 135, 11, 0.12);
-  }
-  .pill-red {
-    @apply pill text-red;
-    background: rgba(229, 72, 77, 0.1);
-  }
-  .pill-muted {
-    @apply pill text-muted;
-    background: rgba(107, 114, 128, 0.1);
-  }
+  .pill-cyan  { @apply pill text-cyan;  background: rgb(var(--c-cyan) / 0.1); }
+  .pill-amber { @apply pill text-amber; background: rgb(var(--c-amber) / 0.12); }
+  .pill-red   { @apply pill text-red;   background: rgb(var(--c-red) / 0.1); }
+  .pill-muted { @apply pill text-muted; background: rgb(var(--c-muted) / 0.1); }
 
   /* Data tables */
-  .data-table {
-    @apply w-full text-sm;
-  }
+  .data-table { @apply w-full text-sm; }
   .data-table thead th {
     @apply text-left font-mono text-[11px] uppercase tracking-wide text-muted font-medium
            px-4 py-3 border-b border-line;

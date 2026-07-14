@@ -3,6 +3,7 @@ import { useAuth } from "../../context/AuthContext";
 import {
   IconGrid, IconScan, IconAlert, IconReport, IconUsers, IconPulse, IconLogout, IconShield,
 } from "./icons";
+import ThemeToggle from "./ThemeToggle";
 
 const ANALYST_NAV = [
   { to: "/dashboard", label: "Overview", Icon: IconGrid },
@@ -97,6 +98,7 @@ export default function Layout({ title, eyebrow, actions, children }) {
               <span className="h-1.5 w-1.5 rounded-full bg-cyan animate-pulse" />
               MODEL ONLINE
             </span>
+            <ThemeToggle />
           </div>
         </header>
 

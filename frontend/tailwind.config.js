@@ -1,25 +1,27 @@
 /** @type {import('tailwindcss').Config} */
-// Light "Tracer" theme inspired by Sardine's design language.
-// NOTE: token names are kept stable across the app; their VALUES are the light
-// palette. `cyan` is the brand accent (electric blue-indigo), not a literal cyan.
+// "Tracer" theme — Sardine-inspired. Colors are CSS variables (RGB channels)
+// so the same token names work in both light and dark mode. Values live in
+// index.css under :root (light) and .dark. `cyan` is the brand accent
+// (electric blue-indigo), not a literal cyan.
 export default {
+  darkMode: "class",
   content: ["./index.html", "./src/**/*.{js,jsx}"],
   theme: {
     extend: {
       colors: {
-        ink: "#F6F6F4",        // page background (warm off-white)
-        panel: "#FFFFFF",      // card surface
-        "panel-2": "#F2F1EE",  // inset / subtle raised
-        line: "#E6E4E0",       // hairline border
-        "line-soft": "#EFEDEA",
-        text: "#0B0C0E",       // near-black body text
-        muted: "#6B7280",      // secondary text
-        cyan: "#2B44E8",       // BRAND accent (electric blue-indigo)
-        "cyan-dim": "#1E33C4",
-        amber: "#E0870B",
-        "amber-dim": "#B26C09",
-        red: "#E5484D",
-        "red-dim": "#C13239",
+        ink: "rgb(var(--c-ink) / <alpha-value>)",
+        panel: "rgb(var(--c-panel) / <alpha-value>)",
+        "panel-2": "rgb(var(--c-panel-2) / <alpha-value>)",
+        line: "rgb(var(--c-line) / <alpha-value>)",
+        "line-soft": "rgb(var(--c-line-soft) / <alpha-value>)",
+        text: "rgb(var(--c-text) / <alpha-value>)",
+        muted: "rgb(var(--c-muted) / <alpha-value>)",
+        cyan: "rgb(var(--c-cyan) / <alpha-value>)",
+        "cyan-dim": "rgb(var(--c-cyan-dim) / <alpha-value>)",
+        amber: "rgb(var(--c-amber) / <alpha-value>)",
+        "amber-dim": "rgb(var(--c-amber-dim) / <alpha-value>)",
+        red: "rgb(var(--c-red) / <alpha-value>)",
+        "red-dim": "rgb(var(--c-red-dim) / <alpha-value>)",
       },
       fontFamily: {
         display: ['"Hanken Grotesk"', "system-ui", "sans-serif"],
