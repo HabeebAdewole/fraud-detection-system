@@ -154,6 +154,29 @@ contradiction — it's the definition of money laundering. The GNN doesn't
 naively vote on neighbour labels; it learns the feature signature of 'funds
 fanning out through anonymous intermediaries toward exchange-like endpoints'."*
 
+## 6c. Explainability (XAI) — "WHY was this flagged?"
+
+Every scored transaction gets a **"Why this score"** panel: per-feature
+contributions computed by **decision-path attribution (the Saabas method, the
+direct precursor of TreeSHAP)**. For each of the 200 trees we walk the
+transaction's decision path; every split shifts the tree's expected illicit
+probability, and that shift is credited to the feature that made the split.
+The contributions **sum exactly to the model's output** (additivity — same
+property SHAP has, and one of our automated tests asserts it).
+
+Because Elliptic anonymises feature names, single features (V47, V101…) have
+no business meaning — so the panel leads with the meaningful split: how much
+of the decision came from the transaction's **own features (V1–V93)** versus
+its **network-neighbourhood aggregates (V94–V165)**. For many illicit
+transactions the network share dominates — the graph story, quantified per
+decision.
+
+If asked "why not SHAP itself?": *"SHAP's numba dependency ships unsigned
+DLLs that Windows Application Control blocks on my machine, so I implemented
+the underlying attribution method natively — pure numpy over sklearn's tree
+structures — and verified additivity in tests."* That answer is stronger
+than having used the library.
+
 ## 7. Honest limitations (owning these earns marks)
 
 - Elliptic's features are anonymised — I can't explain *what* feature 94

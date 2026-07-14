@@ -79,6 +79,22 @@ def get_metrics():
     return jsonify({"models": [m.to_dict() for m in rows]}), 200
 
 
+CURVES_PATH = os.path.join(
+    os.path.dirname(__file__), "..", "..", "..", "models", "elliptic_eval_curves.json"
+)
+
+
+@admin_bp.route("/curves", methods=["GET"])
+@jwt_required()
+@role_required("admin")
+def get_curves():
+    """ROC curves, confusion matrices, and feature importances for the charts."""
+    if not os.path.exists(CURVES_PATH):
+        return jsonify({"error": "Run ml_pipeline/elliptic_eval_curves.py first."}), 404
+    with open(CURVES_PATH) as f:
+        return jsonify(json.load(f)), 200
+
+
 @admin_bp.route("/metrics", methods=["POST"])
 @jwt_required()
 @role_required("admin")

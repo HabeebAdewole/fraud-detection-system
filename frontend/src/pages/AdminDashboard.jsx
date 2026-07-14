@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { adminApi } from "../services/api";
 import Layout from "../components/shared/Layout";
+import { RocChart, ConfusionGrid, ImportanceBars } from "../components/shared/charts";
 
 const PRETTY = {
   "RandomForest": "Random Forest",
@@ -19,12 +20,14 @@ function bar(pct) {
 
 export default function AdminDashboard() {
   const [models, setModels] = useState(null);
+  const [curves, setCurves] = useState(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
     adminApi.getMetrics()
       .then((d) => setModels(d.models))
       .catch((err) => setError(err.message));
+    adminApi.getCurves().then(setCurves).catch(() => {});
   }, []);
 
   const best = models && [...models].sort((a, b) => b.f1_score - a.f1_score)[0];
@@ -89,6 +92,46 @@ export default function AdminDashboard() {
               graph-based node classification over the transaction network.
             </p>
           </div>
+
+          {/* Visual evaluation */}
+          {curves && (
+            <>
+              <div className="grid lg:grid-cols-2 gap-6 items-start">
+                <div className="panel p-6">
+                  <p className="eyebrow mb-1">Discrimination</p>
+                  <h2 className="font-display font-bold tracking-tight mb-4">ROC curves</h2>
+                  <RocChart rf={curves.models.rf} gnn={curves.models.gnn} />
+                  <p className="text-[12px] text-muted mt-3 leading-relaxed">
+                    Each point is a decision threshold: how much fraud is caught (up)
+                    against how many false alarms are raised (right). The further a
+                    curve bows above the dashed chance line, the better the model
+                    separates illicit from licit.
+                  </p>
+                </div>
+
+                <div className="panel p-6">
+                  <p className="eyebrow mb-1">Errors at threshold 0.5</p>
+                  <h2 className="font-display font-bold tracking-tight mb-4">Confusion matrices</h2>
+                  <div className="space-y-5">
+                    <ConfusionGrid title="Random Forest" confusion={curves.models.rf.confusion} />
+                    <ConfusionGrid title="GraphSAGE (GNN)" confusion={curves.models.gnn.confusion} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="panel p-6">
+                <p className="eyebrow mb-1">What drives the Random Forest</p>
+                <h2 className="font-display font-bold tracking-tight mb-4">Global feature importance · top 15</h2>
+                <ImportanceBars top={curves.feature_importance.top} groupShare={curves.feature_importance.group_share} />
+                <p className="text-[12px] text-muted mt-4 leading-relaxed">
+                  Elliptic anonymises feature names; what matters is the split —
+                  V1–V93 describe the transaction itself, V94–V165 aggregate its
+                  network neighbourhood. Per-decision explanations on the Analyze
+                  page use the same grouping.
+                </p>
+              </div>
+            </>
+          )}
         </div>
       )}
     </Layout>

@@ -18,6 +18,9 @@
     --c-amber-dim: 178 108 9;
     --c-red: 229 72 77;
     --c-red-dim: 193 50 57;
+    /* Chart series (validated: dataviz six-checks, light surface) */
+    --chart-1: #2b44e8;
+    --chart-2: #e0870b;
     color-scheme: light;
   }
 
@@ -36,6 +39,9 @@
     --c-amber-dim: 210 140 30;
     --c-red: 251 110 115;
     --c-red-dim: 220 80 86;
+    /* Chart series (validated: dataviz six-checks, dark surface #131926) */
+    --chart-1: #5b74f0;
+    --chart-2: #c77f1f;
     color-scheme: dark;
   }
 

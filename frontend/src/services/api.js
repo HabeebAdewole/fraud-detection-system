@@ -36,6 +36,7 @@ export const predictionApi = {
   submit: (payload) =>
     request("/predictions/", { method: "POST", body: JSON.stringify(payload) }),
   list: (page = 1) => request(`/predictions/?page=${page}`),
+  explain: (txId) => request(`/predictions/${txId}/explain`),
   listAlerts: (status) =>
     request(`/predictions/alerts${status ? `?status=${status}` : ""}`),
   updateAlert: (id, payload) =>
@@ -65,4 +66,5 @@ export const adminApi = {
   deleteUser: (id) =>
     request(`/admin/users/${id}`, { method: "DELETE" }),
   getMetrics: () => request("/admin/metrics"),
+  getCurves: () => request("/admin/curves"),
 };
