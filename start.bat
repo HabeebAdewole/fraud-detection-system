@@ -16,6 +16,11 @@ if errorlevel 1 (
 timeout /t 5 /nobreak >nul
 
 echo [2/3] Starting Flask backend on http://localhost:5000 ...
+REM Kill any stale backend/frontend processes first so they never stack up
+REM (a stale process holding the port serves OLD code = mystery 404s).
+powershell -NoProfile -Command "Get-CimInstance Win32_Process -Filter \"Name='python.exe'\" | Where-Object { $_.CommandLine -like '*run.py*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }" >nul 2>&1
+powershell -NoProfile -Command "Get-CimInstance Win32_Process -Filter \"Name='node.exe'\" | Where-Object { $_.CommandLine -like '*vite*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }" >nul 2>&1
+timeout /t 2 /nobreak >nul
 start "Tracer Backend" cmd /k "cd /d %~dp0backend && venv\Scripts\python.exe run.py"
 timeout /t 3 /nobreak >nul
 
