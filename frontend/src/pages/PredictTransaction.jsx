@@ -3,6 +3,7 @@ import { transactionApi, predictionApi } from "../services/api";
 import Layout from "../components/shared/Layout";
 import RiskMeter from "../components/shared/RiskMeter";
 import SubgraphView from "../components/shared/SubgraphView";
+import { ContributionBars } from "../components/shared/charts";
 
 const LABEL_PILL = { illicit: "pill-red", licit: "pill-cyan", unknown: "pill-muted" };
 
@@ -17,6 +18,7 @@ export default function PredictTransaction() {
   const [model, setModel] = useState("rf");
   const [result, setResult] = useState(null);
   const [subgraph, setSubgraph] = useState(null);
+  const [explanation, setExplanation] = useState(null);
   const [scoring, setScoring] = useState(false);
   const [error, setError] = useState("");
 
@@ -40,6 +42,9 @@ export default function PredictTransaction() {
       ]);
       setResult(pred);
       setSubgraph(sg);
+      // XAI is supplementary — fetch after the verdict, tolerate failure
+      setExplanation(null);
+      predictionApi.explain(tx.tx_id).then(setExplanation).catch(() => {});
     } catch (err) {
       setError(err.message || "Scoring failed");
     } finally {
@@ -150,7 +155,7 @@ export default function PredictTransaction() {
                   <>
                     <div className={`flex items-center gap-2 mb-5 ${isFraud ? "text-red" : "text-cyan"}`}>
                       <span className={`h-2.5 w-2.5 rounded-full ${isFraud ? "bg-red" : "bg-cyan"}`}
-                        style={{ boxShadow: `0 0 12px ${isFraud ? "#FB5468" : "#2DE1C2"}` }} />
+                        style={{ boxShadow: `0 0 10px ${isFraud ? "#E5484D" : "#2B44E8"}` }} />
                       <p className="font-display text-lg font-bold tracking-tight">
                         {isFraud ? "Flagged illicit" : "Cleared"}
                       </p>
@@ -178,6 +183,35 @@ export default function PredictTransaction() {
                   </>
                 )}
               </div>
+
+              {explanation && !scoring && result && (
+                <div className="panel p-6">
+                  <div className="flex items-baseline justify-between mb-1">
+                    <p className="eyebrow">Explainability · Random Forest</p>
+                    <span className="font-mono text-[10px] text-muted">{explanation.method}</span>
+                  </div>
+                  <h3 className="font-display font-bold tracking-tight mb-4">Why this score</h3>
+
+                  {/* Group split — the graph-story headline */}
+                  {(() => {
+                    const g = explanation.group_totals;
+                    const total = Math.abs(g.local) + Math.abs(g.aggregate);
+                    const aggPct = total > 0 ? Math.round((Math.abs(g.aggregate) / total) * 100) : 0;
+                    return (
+                      <p className="text-[13px] text-muted leading-relaxed mb-4">
+                        Starting from the base rate of {(explanation.base_value * 100).toFixed(0)}%,
+                        the transaction's own features moved the score by{" "}
+                        <span className="font-mono text-text">{g.local >= 0 ? "+" : ""}{(g.local * 100).toFixed(1)}pp</span>{" "}
+                        and its network-neighbourhood features by{" "}
+                        <span className="font-mono text-text">{g.aggregate >= 0 ? "+" : ""}{(g.aggregate * 100).toFixed(1)}pp</span>{" "}
+                        — {aggPct}% of the decision's weight came from network context.
+                      </p>
+                    );
+                  })()}
+
+                  <ContributionBars contributions={explanation.contributions} />
+                </div>
+              )}
 
               {subgraph && !scoring && (
                 <div className="panel p-6">

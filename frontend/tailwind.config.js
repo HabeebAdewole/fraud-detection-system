@@ -1,34 +1,40 @@
 /** @type {import('tailwindcss').Config} */
+// "Tracer" theme — Sardine-inspired. Colors are CSS variables (RGB channels)
+// so the same token names work in both light and dark mode. Values live in
+// index.css under :root (light) and .dark. `cyan` is the brand accent
+// (electric blue-indigo), not a literal cyan.
 export default {
+  darkMode: "class",
   content: ["./index.html", "./src/**/*.{js,jsx}"],
   theme: {
     extend: {
       colors: {
-        ink: "#0A0E16",
-        panel: "#111824",
-        "panel-2": "#18202E",
-        line: "#232C3C",
-        "line-soft": "#1B2230",
-        text: "#EAEDF3",
-        muted: "#7E879B",
-        cyan: "#2DE1C2",
-        "cyan-dim": "#1FA892",
-        amber: "#F6B73C",
-        "amber-dim": "#B5821F",
-        red: "#FB5468",
-        "red-dim": "#B83545",
+        ink: "rgb(var(--c-ink) / <alpha-value>)",
+        panel: "rgb(var(--c-panel) / <alpha-value>)",
+        "panel-2": "rgb(var(--c-panel-2) / <alpha-value>)",
+        line: "rgb(var(--c-line) / <alpha-value>)",
+        "line-soft": "rgb(var(--c-line-soft) / <alpha-value>)",
+        text: "rgb(var(--c-text) / <alpha-value>)",
+        muted: "rgb(var(--c-muted) / <alpha-value>)",
+        cyan: "rgb(var(--c-cyan) / <alpha-value>)",
+        "cyan-dim": "rgb(var(--c-cyan-dim) / <alpha-value>)",
+        amber: "rgb(var(--c-amber) / <alpha-value>)",
+        "amber-dim": "rgb(var(--c-amber-dim) / <alpha-value>)",
+        red: "rgb(var(--c-red) / <alpha-value>)",
+        "red-dim": "rgb(var(--c-red-dim) / <alpha-value>)",
       },
       fontFamily: {
-        display: ['"Space Grotesk"', "system-ui", "sans-serif"],
-        sans: ['"IBM Plex Sans"', "system-ui", "sans-serif"],
-        mono: ['"IBM Plex Mono"', "ui-monospace", "monospace"],
+        display: ['"Hanken Grotesk"', "system-ui", "sans-serif"],
+        sans: ["Inter", "system-ui", "sans-serif"],
+        mono: ['"JetBrains Mono"', "ui-monospace", "monospace"],
       },
       boxShadow: {
-        panel: "0 1px 0 0 rgba(255,255,255,0.02) inset, 0 8px 24px -12px rgba(0,0,0,0.6)",
-        glow: "0 0 0 1px rgba(45,225,194,0.35), 0 0 24px -4px rgba(45,225,194,0.35)",
+        panel: "0 1px 2px rgba(16,24,40,0.04), 0 1px 3px rgba(16,24,40,0.06)",
+        lift: "0 4px 12px -2px rgba(16,24,40,0.10), 0 2px 6px -2px rgba(16,24,40,0.06)",
+        glow: "0 0 0 3px rgba(43,68,232,0.15)",
       },
       letterSpacing: {
-        eyebrow: "0.18em",
+        eyebrow: "0.14em",
       },
     },
   },

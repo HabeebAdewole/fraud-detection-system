@@ -1,6 +1,6 @@
 @echo off
 REM ============================================================
-REM  Sentinel Fraud Detection - one-click launcher (Windows)
+REM  Tracer Fraud Detection - one-click launcher (Windows)
 REM  Starts MySQL, the Flask backend, and the React frontend.
 REM ============================================================
 
@@ -16,11 +16,16 @@ if errorlevel 1 (
 timeout /t 5 /nobreak >nul
 
 echo [2/3] Starting Flask backend on http://localhost:5000 ...
-start "Sentinel Backend" cmd /k "cd /d %~dp0backend && venv\Scripts\python.exe run.py"
+REM Kill any stale backend/frontend processes first so they never stack up
+REM (a stale process holding the port serves OLD code = mystery 404s).
+powershell -NoProfile -Command "Get-CimInstance Win32_Process -Filter \"Name='python.exe'\" | Where-Object { $_.CommandLine -like '*run.py*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }" >nul 2>&1
+powershell -NoProfile -Command "Get-CimInstance Win32_Process -Filter \"Name='node.exe'\" | Where-Object { $_.CommandLine -like '*vite*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }" >nul 2>&1
+timeout /t 2 /nobreak >nul
+start "Tracer Backend" cmd /k "cd /d %~dp0backend && venv\Scripts\python.exe run.py"
 timeout /t 3 /nobreak >nul
 
 echo [3/3] Starting React frontend on http://localhost:5173 ...
-start "Sentinel Frontend" cmd /k "cd /d %~dp0frontend && npm run dev"
+start "Tracer Frontend" cmd /k "cd /d %~dp0frontend && npm run dev"
 
 echo.
 echo All three services starting. Give it ~10 seconds, then open:

@@ -3,6 +3,7 @@ import { useAuth } from "../../context/AuthContext";
 import {
   IconGrid, IconScan, IconAlert, IconReport, IconUsers, IconPulse, IconLogout, IconShield,
 } from "./icons";
+import ThemeToggle from "./ThemeToggle";
 
 const ANALYST_NAV = [
   { to: "/dashboard", label: "Overview", Icon: IconGrid },
@@ -31,12 +32,12 @@ export default function Layout({ title, eyebrow, actions, children }) {
   return (
     <div className="min-h-screen">
       {/* Command rail */}
-      <aside className="fixed inset-y-0 left-0 w-60 border-r border-line bg-panel/70 backdrop-blur-sm flex flex-col">
+      <aside className="fixed inset-y-0 left-0 w-60 border-r border-line bg-panel flex flex-col">
         <div className="px-5 h-16 flex items-center gap-2.5 border-b border-line">
           <span className="text-cyan"><IconShield width={22} height={22} /></span>
           <div className="leading-none">
-            <p className="font-display font-bold tracking-tight text-text text-lg">SENTINEL</p>
-            <p className="font-mono text-[9px] uppercase tracking-eyebrow text-muted mt-0.5">Fraud Console</p>
+            <p className="font-display font-bold tracking-tight text-text text-lg">Tracer</p>
+            <p className="font-mono text-[9px] uppercase tracking-eyebrow text-muted mt-0.5">Bitcoin AML</p>
           </div>
         </div>
 
@@ -86,7 +87,7 @@ export default function Layout({ title, eyebrow, actions, children }) {
 
       {/* Main */}
       <div className="pl-60">
-        <header className="sticky top-0 z-10 h-16 border-b border-line bg-ink/80 backdrop-blur-md flex items-center justify-between px-8">
+        <header className="sticky top-0 z-10 h-16 border-b border-line bg-ink/85 backdrop-blur-md flex items-center justify-between px-8">
           <div>
             {eyebrow && <p className="eyebrow mb-0.5">{eyebrow}</p>}
             <h1 className="font-display text-xl font-bold tracking-tight text-text leading-none">{title}</h1>
@@ -97,6 +98,7 @@ export default function Layout({ title, eyebrow, actions, children }) {
               <span className="h-1.5 w-1.5 rounded-full bg-cyan animate-pulse" />
               MODEL ONLINE
             </span>
+            <ThemeToggle />
           </div>
         </header>
 

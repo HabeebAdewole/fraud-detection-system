@@ -3,92 +3,119 @@
 @tailwind utilities;
 
 @layer base {
+  /* Light theme (default) */
   :root {
+    --c-ink: 246 246 244;
+    --c-panel: 255 255 255;
+    --c-panel-2: 242 241 238;
+    --c-line: 230 228 224;
+    --c-line-soft: 239 237 234;
+    --c-text: 11 12 14;
+    --c-muted: 107 114 128;
+    --c-cyan: 43 68 232;
+    --c-cyan-dim: 30 51 196;
+    --c-amber: 224 135 11;
+    --c-amber-dim: 178 108 9;
+    --c-red: 229 72 77;
+    --c-red-dim: 193 50 57;
+    /* Chart series (validated: dataviz six-checks, light surface) */
+    --chart-1: #2b44e8;
+    --chart-2: #e0870b;
+    color-scheme: light;
+  }
+
+  /* Dark theme */
+  .dark {
+    --c-ink: 11 15 23;
+    --c-panel: 19 25 38;
+    --c-panel-2: 27 34 48;
+    --c-line: 38 48 63;
+    --c-line-soft: 30 39 51;
+    --c-text: 234 237 243;
+    --c-muted: 138 147 166;
+    --c-cyan: 118 140 255;
+    --c-cyan-dim: 96 118 235;
+    --c-amber: 245 176 60;
+    --c-amber-dim: 210 140 30;
+    --c-red: 251 110 115;
+    --c-red-dim: 220 80 86;
+    /* Chart series (validated: dataviz six-checks, dark surface #131926) */
+    --chart-1: #5b74f0;
+    --chart-2: #c77f1f;
     color-scheme: dark;
   }
 
-  html,
-  body,
-  #root {
+  html, body, #root {
     height: 100%;
   }
 
   body {
     @apply bg-ink text-text font-sans antialiased;
-    background-image:
-      radial-gradient(900px 500px at 100% -10%, rgba(45, 225, 194, 0.06), transparent 60%),
-      radial-gradient(700px 500px at -10% 110%, rgba(251, 84, 104, 0.05), transparent 60%);
-    background-attachment: fixed;
   }
 
-  /* Tabular figures everywhere numbers appear */
   .font-mono {
     font-variant-numeric: tabular-nums;
   }
 
   ::selection {
-    background: rgba(45, 225, 194, 0.25);
+    background: rgb(var(--c-cyan) / 0.18);
   }
 
-  /* Refined scrollbar */
   * {
     scrollbar-width: thin;
-    scrollbar-color: #2a3346 transparent;
+    scrollbar-color: rgb(var(--c-line)) transparent;
   }
-  *::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
-  }
+  *::-webkit-scrollbar { width: 10px; height: 10px; }
   *::-webkit-scrollbar-thumb {
-    background: #2a3346;
+    background: rgb(var(--c-line));
     border-radius: 999px;
     border: 2px solid transparent;
     background-clip: padding-box;
   }
 
   *:focus-visible {
-    outline: 2px solid rgba(45, 225, 194, 0.7);
+    outline: 2px solid rgb(var(--c-cyan) / 0.55);
     outline-offset: 2px;
-    border-radius: 4px;
+    border-radius: 6px;
   }
 }
 
 @layer components {
   /* Surfaces */
   .panel {
-    @apply rounded-xl border border-line bg-panel shadow-panel;
+    @apply rounded-lg border border-line bg-panel shadow-panel;
   }
   .panel-2 {
     @apply rounded-lg border border-line bg-panel-2;
   }
 
-  /* Eyebrow / section labels — encode structure, not decoration */
+  /* Eyebrow / section labels */
   .eyebrow {
     @apply font-mono text-[11px] uppercase tracking-eyebrow text-muted;
   }
 
   /* Buttons */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold
            transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
   }
   .btn-primary {
-    @apply btn bg-cyan text-ink hover:bg-[#3eecce] font-semibold;
+    @apply btn bg-cyan text-white hover:bg-cyan-dim;
   }
   .btn-ghost {
-    @apply btn border border-line text-text;
+    @apply btn border border-line text-text bg-panel;
   }
   .btn-ghost:hover {
-    border-color: rgba(45, 225, 194, 0.5);
-    color: #2de1c2;
+    border-color: rgb(var(--c-cyan) / 0.5);
+    color: rgb(var(--c-cyan));
   }
   .btn-danger {
     @apply btn text-red;
-    background: rgba(251, 84, 104, 0.15);
-    border: 1px solid rgba(251, 84, 104, 0.3);
+    background: rgb(var(--c-red) / 0.1);
+    border: 1px solid rgb(var(--c-red) / 0.28);
   }
   .btn-danger:hover {
-    background: rgba(251, 84, 104, 0.25);
+    background: rgb(var(--c-red) / 0.16);
   }
 
   /* Inputs */
@@ -96,9 +123,12 @@
     @apply block text-[12px] font-medium text-muted mb-1.5;
   }
   .input {
-    @apply w-full rounded-lg border border-line bg-ink/60 px-3 py-2.5 text-sm text-text
-           placeholder:text-muted/60 transition-colors
-           focus:border-cyan/60 focus:bg-ink focus:outline-none;
+    @apply w-full rounded-lg border border-line bg-panel px-3 py-2.5 text-sm text-text
+           placeholder:text-muted/70 transition-colors
+           focus:border-cyan focus:outline-none;
+  }
+  .input:focus {
+    box-shadow: 0 0 0 3px rgb(var(--c-cyan) / 0.12);
   }
   .input-mono {
     @apply input font-mono;
@@ -108,27 +138,13 @@
   .pill {
     @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-mono font-medium uppercase tracking-wide;
   }
-  .pill-cyan {
-    @apply pill text-cyan;
-    background: rgba(45, 225, 194, 0.12);
-  }
-  .pill-amber {
-    @apply pill text-amber;
-    background: rgba(246, 183, 60, 0.12);
-  }
-  .pill-red {
-    @apply pill text-red;
-    background: rgba(251, 84, 104, 0.12);
-  }
-  .pill-muted {
-    @apply pill text-muted;
-    background: rgba(126, 135, 155, 0.12);
-  }
+  .pill-cyan  { @apply pill text-cyan;  background: rgb(var(--c-cyan) / 0.1); }
+  .pill-amber { @apply pill text-amber; background: rgb(var(--c-amber) / 0.12); }
+  .pill-red   { @apply pill text-red;   background: rgb(var(--c-red) / 0.1); }
+  .pill-muted { @apply pill text-muted; background: rgb(var(--c-muted) / 0.1); }
 
   /* Data tables */
-  .data-table {
-    @apply w-full text-sm;
-  }
+  .data-table { @apply w-full text-sm; }
   .data-table thead th {
     @apply text-left font-mono text-[11px] uppercase tracking-wide text-muted font-medium
            px-4 py-3 border-b border-line;
@@ -137,7 +153,7 @@
     @apply px-4 py-3 border-b border-line-soft text-text/90;
   }
   .data-table tbody tr {
-    @apply transition-colors hover:bg-panel-2/60;
+    @apply transition-colors hover:bg-panel-2/70;
   }
 }
 

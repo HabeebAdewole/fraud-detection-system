@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { ThemeProvider } from "./context/ThemeContext";
+import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import AnalystDashboard from "./pages/AnalystDashboard";
 import PredictTransaction from "./pages/PredictTransaction";
@@ -11,7 +13,7 @@ import AdminUsers from "./pages/AdminUsers";
 
 function RequireAuth({ children, role }) {
   const { user, loading } = useAuth();
-  if (loading) return <div className="min-h-screen bg-slate-900 flex items-center justify-center text-slate-400">Loading…</div>;
+  if (loading) return <div className="min-h-screen bg-ink flex items-center justify-center text-muted font-mono text-sm">Loading…</div>;
   if (!user) return <Navigate to="/login" replace />;
   if (role && user.role !== role) return <Navigate to={user.role === "admin" ? "/admin" : "/dashboard"} replace />;
   return children;
@@ -19,9 +21,11 @@ function RequireAuth({ children, role }) {
 
 export default function App() {
   return (
+    <ThemeProvider>
     <AuthProvider>
       <BrowserRouter>
         <Routes>
+          <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
 
           {/* Analyst routes */}
@@ -36,9 +40,10 @@ export default function App() {
           <Route path="/admin/users"   element={<RequireAuth role="admin"><AdminUsers /></RequireAuth>} />
           <Route path="/admin/metrics" element={<RequireAuth role="admin"><AdminDashboard /></RequireAuth>} />
 
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
+    </ThemeProvider>
   );
 }

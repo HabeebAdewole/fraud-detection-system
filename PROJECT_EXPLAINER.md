@@ -1,4 +1,4 @@
-# Sentinel — Plain-English Project Explainer
+# Tracer — Plain-English Project Explainer
 *Read this twice and you can defend every layer of the system.*
 
 ---
@@ -81,7 +81,7 @@ Three-tier architecture:
 
 | Tier | Tech | What it does |
 |---|---|---|
-| Presentation | React + Tailwind ("Sentinel" console) | Login, browse/search transactions, score them, see the network graph, manage alerts, reports, admin |
+| Presentation | React + Tailwind ("Tracer" console) | Login, browse/search transactions, score them, see the network graph, manage alerts, reports, admin |
 | Application | Flask REST API + JWT auth | Auth service, transaction service, ML prediction service (loads both models), report service |
 | Data | MySQL + model artifacts | 203k transactions, 234k edges, predictions, alerts, users, model metrics |
 
@@ -153,6 +153,29 @@ Key line: *"Illicit transactions connecting to licit ones isn't a
 contradiction — it's the definition of money laundering. The GNN doesn't
 naively vote on neighbour labels; it learns the feature signature of 'funds
 fanning out through anonymous intermediaries toward exchange-like endpoints'."*
+
+## 6c. Explainability (XAI) — "WHY was this flagged?"
+
+Every scored transaction gets a **"Why this score"** panel: per-feature
+contributions computed by **decision-path attribution (the Saabas method, the
+direct precursor of TreeSHAP)**. For each of the 200 trees we walk the
+transaction's decision path; every split shifts the tree's expected illicit
+probability, and that shift is credited to the feature that made the split.
+The contributions **sum exactly to the model's output** (additivity — same
+property SHAP has, and one of our automated tests asserts it).
+
+Because Elliptic anonymises feature names, single features (V47, V101…) have
+no business meaning — so the panel leads with the meaningful split: how much
+of the decision came from the transaction's **own features (V1–V93)** versus
+its **network-neighbourhood aggregates (V94–V165)**. For many illicit
+transactions the network share dominates — the graph story, quantified per
+decision.
+
+If asked "why not SHAP itself?": *"SHAP's numba dependency ships unsigned
+DLLs that Windows Application Control blocks on my machine, so I implemented
+the underlying attribution method natively — pure numpy over sklearn's tree
+structures — and verified additivity in tests."* That answer is stronger
+than having used the library.
 
 ## 7. Honest limitations (owning these earns marks)
 

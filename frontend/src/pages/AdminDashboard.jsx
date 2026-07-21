@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { adminApi } from "../services/api";
 import Layout from "../components/shared/Layout";
+import { RocChart, ConfusionGrid, ImportanceBars } from "../components/shared/charts";
 
 const PRETTY = {
   "RandomForest": "Random Forest",
@@ -9,7 +10,7 @@ const PRETTY = {
 };
 
 function bar(pct) {
-  const color = pct >= 90 ? "#2DE1C2" : pct >= 70 ? "#F6B73C" : "#FB5468";
+  const color = pct >= 90 ? "#2B44E8" : pct >= 70 ? "#E0870B" : "#E5484D";
   return (
     <div className="h-1.5 rounded-full bg-line overflow-hidden mt-1.5">
       <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color }} />
@@ -19,12 +20,14 @@ function bar(pct) {
 
 export default function AdminDashboard() {
   const [models, setModels] = useState(null);
+  const [curves, setCurves] = useState(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
     adminApi.getMetrics()
       .then((d) => setModels(d.models))
       .catch((err) => setError(err.message));
+    adminApi.getCurves().then(setCurves).catch(() => {});
   }, []);
 
   const best = models && [...models].sort((a, b) => b.f1_score - a.f1_score)[0];
@@ -43,7 +46,7 @@ export default function AdminDashboard() {
         <div className="space-y-7">
           {/* Headline */}
           <div className="panel p-7 relative overflow-hidden">
-            <div className="absolute inset-0" style={{ background: "radial-gradient(500px 200px at 90% 0%, rgba(45,225,194,0.08), transparent 60%)" }} />
+            <div className="absolute inset-0" style={{ background: "radial-gradient(500px 200px at 90% 0%, rgba(43,68,232,0.06), transparent 60%)" }} />
             <div className="relative">
               <p className="eyebrow mb-2">Best model · illicit F1</p>
               <p className="font-mono text-6xl font-semibold text-cyan leading-none">
@@ -89,6 +92,46 @@ export default function AdminDashboard() {
               graph-based node classification over the transaction network.
             </p>
           </div>
+
+          {/* Visual evaluation */}
+          {curves && (
+            <>
+              <div className="grid lg:grid-cols-2 gap-6 items-start">
+                <div className="panel p-6">
+                  <p className="eyebrow mb-1">Discrimination</p>
+                  <h2 className="font-display font-bold tracking-tight mb-4">ROC curves</h2>
+                  <RocChart rf={curves.models.rf} gnn={curves.models.gnn} />
+                  <p className="text-[12px] text-muted mt-3 leading-relaxed">
+                    Each point is a decision threshold: how much fraud is caught (up)
+                    against how many false alarms are raised (right). The further a
+                    curve bows above the dashed chance line, the better the model
+                    separates illicit from licit.
+                  </p>
+                </div>
+
+                <div className="panel p-6">
+                  <p className="eyebrow mb-1">Errors at threshold 0.5</p>
+                  <h2 className="font-display font-bold tracking-tight mb-4">Confusion matrices</h2>
+                  <div className="space-y-5">
+                    <ConfusionGrid title="Random Forest" confusion={curves.models.rf.confusion} />
+                    <ConfusionGrid title="GraphSAGE (GNN)" confusion={curves.models.gnn.confusion} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="panel p-6">
+                <p className="eyebrow mb-1">What drives the Random Forest</p>
+                <h2 className="font-display font-bold tracking-tight mb-4">Global feature importance · top 15</h2>
+                <ImportanceBars top={curves.feature_importance.top} groupShare={curves.feature_importance.group_share} />
+                <p className="text-[12px] text-muted mt-4 leading-relaxed">
+                  Elliptic anonymises feature names; what matters is the split —
+                  V1–V93 describe the transaction itself, V94–V165 aggregate its
+                  network neighbourhood. Per-decision explanations on the Analyze
+                  page use the same grouping.
+                </p>
+              </div>
+            </>
+          )}
         </div>
       )}
     </Layout>

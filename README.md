@@ -1,4 +1,4 @@
-# Sentinel — ML-Based Financial Fraud Detection System
+# Tracer — ML-Based Financial Fraud Detection System
 BSc Computer Science Final Year Project — Crescent University, Abeokuta
 
 A web-based anti-money-laundering console for the Bitcoin blockchain. Two
@@ -26,7 +26,7 @@ The RF result reproduces the published benchmark (Weber et al. report ≈0.79 F1
 ## Architecture
 
 ```
-React + Tailwind ("Sentinel" console)        Presentation
+React + Tailwind ("Tracer" console)        Presentation
   Login · Overview · Live Monitor · Analyze (2-hop graph view)
   Alerts · Reports · Admin (users, model benchmark)
         │  JWT (role-based: analyst / admin)
@@ -55,8 +55,8 @@ fraud-detection/
 │   ├── elliptic_load_db.py         loads transactions/edges/metrics into MySQL
 │   ├── elliptic_predictor.py       inference used by Flask (single + batch)
 │   ├── make_demo_shortlist.py      curates presentation-ready transaction IDs
-│   └── train.py / predictor.py / evaluate.py   (iteration 1: PaySim version)
-├── backend/                Flask API (+ seed_users.py)
+│   └── elliptic_eval_curves.py     ROC/confusion/importance data for the admin charts
+├── backend/                Flask API (+ seed_users.py, tests/)
 ├── frontend/               React + Vite + Tailwind
 ├── PROJECT_EXPLAINER.md    plain-English defense guide + demo script
 ├── .plans/demo-shortlist.md  transaction IDs that demo well
@@ -96,6 +96,10 @@ cd frontend && npm install
 
 **Run it:** double-click `start.bat`, then open http://localhost:5173.
 
+**Run the tests:** `cd backend && venv\Scripts\python.exe -m pytest tests/ -v`
+(29 tests: auth, role enforcement, input validation, the no-open-registration
+regression, ML inference determinism, batch screening, XAI additivity.)
+
 ## Key API endpoints
 
 | Method | Path | Role | Purpose |
@@ -104,6 +108,8 @@ cd frontend && npm install
 | GET | /api/transactions/ | any | Browse/search (filter by label, tx id) |
 | GET | /api/transactions/:id/subgraph | any | 2-hop network neighbourhood |
 | POST | /api/predictions/ | analyst+ | Score a transaction (rf or gnn) |
+| GET | /api/predictions/:id/explain | any | XAI: per-feature contributions (decision-path attribution) |
+| GET | /api/admin/curves | admin | ROC curves, confusion matrices, feature importances |
 | GET/PATCH | /api/predictions/alerts | analyst+ | Alert queue / resolve with notes |
 | GET | /api/monitor/status | any | Replay position + thresholds |
 | POST | /api/monitor/advance | analyst+ | Screen the next time step (auto-alerts) |

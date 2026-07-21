@@ -64,6 +64,16 @@ def submit_prediction():
     }), 201
 
 
+@pred_bp.route("/<int:tx_id>/explain", methods=["GET"])
+@jwt_required()
+def explain_prediction(tx_id):
+    """SHAP explanation of the RF's score for this transaction (XAI)."""
+    if not tx_exists(tx_id):
+        return jsonify({"error": f"Transaction {tx_id} not found in the dataset"}), 404
+    from elliptic_explain import explain as shap_explain
+    return jsonify(shap_explain(tx_id)), 200
+
+
 @pred_bp.route("/", methods=["GET"])
 @jwt_required()
 def list_predictions():
