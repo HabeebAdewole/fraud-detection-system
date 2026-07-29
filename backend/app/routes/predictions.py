@@ -4,6 +4,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", "ml
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import db
+from app.config import alert_threshold_for
 from app.models.models import Transaction, Prediction, Alert
 from app.utils.helpers import role_required
 from elliptic_predictor import predict as ml_predict, exists as tx_exists
@@ -18,7 +19,14 @@ def submit_prediction():
     """
     Score an EXISTING transaction by tx_id (Elliptic is a fixed graph — analysts
     look up real transactions, they don't author them). Body: {tx_id, model?}.
-    Stores the prediction and raises an alert if the transaction is flagged illicit.
+
+    Alerting policy (matches the Live Monitor):
+      * predicted_class stays at the conventional 0.5 cut — that is what the
+        reported confusion matrices and F1 scores are computed at;
+      * an ALERT is only raised on a high-confidence crossing (RF >= 0.9,
+        GNN >= 0.99), because the alert queue models finite analyst capacity;
+      * at most one OPEN alert exists per transaction, so re-scoring the same
+        transaction (e.g. toggling between models) never duplicates a case.
     """
     data = request.get_json() or {}
     tx_id = data.get("tx_id")
@@ -49,10 +57,26 @@ def submit_prediction():
     db.session.add(prediction)
     db.session.flush()
 
+    # Raise an alert only on a high-confidence crossing, and only if this
+    # transaction does not already have an open case.
     alert = None
-    if result["predicted_class"] == 1:
-        alert = Alert(prediction_id=prediction.prediction_id, assigned_to=user_id)
-        db.session.add(alert)
+    threshold = alert_threshold_for(result["model_type"])
+    if result["fraud_probability"] >= threshold:
+        existing = (
+            db.session.query(Alert)
+            .join(Prediction, Alert.prediction_id == Prediction.prediction_id)
+            .filter(Prediction.transaction_id == tx_id, Alert.alert_status == "open")
+            .first()
+        )
+        if existing:
+            alert = existing          # reuse the open case, don't duplicate it
+            alert_is_new = False
+        else:
+            alert = Alert(prediction_id=prediction.prediction_id, assigned_to=user_id)
+            db.session.add(alert)
+            alert_is_new = True
+    else:
+        alert_is_new = False
 
     db.session.commit()
 
@@ -61,6 +85,8 @@ def submit_prediction():
         "prediction": prediction.to_dict(),
         "scores": result,
         "alert": alert.to_dict() if alert else None,
+        "alert_is_new": alert_is_new,
+        "alert_threshold": threshold,
     }), 201
 
 

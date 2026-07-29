@@ -99,6 +99,56 @@ class TestTransactions:
         assert any(n["tx_id"] == 3205536 for n in body["nodes"])
 
 
+class TestReports:
+    """Regression cover for the report generator. This route was broken for
+    weeks after the Elliptic migration (it still joined on the old PaySim
+    column names) precisely because nothing tested it."""
+
+    def test_requires_auth(self, client):
+        assert client.post("/api/reports/", json={}).status_code == 401
+
+    def test_missing_dates_is_400(self, client, analyst_headers):
+        r = client.post("/api/reports/", headers=analyst_headers, json={})
+        assert r.status_code == 400
+
+    def test_bad_date_format_is_400(self, client, analyst_headers):
+        r = client.post("/api/reports/", headers=analyst_headers,
+                        json={"date_range_start": "01-01-2026", "date_range_end": "2026-12-31"})
+        assert r.status_code == 400
+
+    def test_reversed_range_is_400(self, client, analyst_headers):
+        r = client.post("/api/reports/", headers=analyst_headers,
+                        json={"date_range_start": "2026-12-31", "date_range_end": "2026-01-01"})
+        assert r.status_code == 400
+
+    def test_generates_report_and_lists_it(self, client, analyst_headers):
+        r = client.post("/api/reports/", headers=analyst_headers, json={
+            "report_type": "fraud_summary",
+            "date_range_start": "2020-01-01",
+            "date_range_end": "2030-12-31",
+        })
+        assert r.status_code == 201, r.get_json()
+        body = r.get_json()
+        assert body["report_type"] == "fraud_summary"
+        assert body["file_path"]
+
+        listed = client.get("/api/reports/", headers=analyst_headers)
+        assert listed.status_code == 200
+        assert any(rep["report_id"] == body["report_id"] for rep in listed.get_json()["reports"])
+
+    def test_report_csv_has_elliptic_columns(self, client, analyst_headers):
+        """The CSV must describe Elliptic transactions (tx_id/time_step/label),
+        not the PaySim fields (type/amount) the old code referenced."""
+        r = client.post("/api/reports/", headers=analyst_headers, json={
+            "date_range_start": "2020-01-01", "date_range_end": "2030-12-31"})
+        assert r.status_code == 201
+        with open(r.get_json()["file_path"]) as f:
+            header = f.readline()
+        for col in ("tx_id", "time_step", "ground_truth_label", "model_type"):
+            assert col in header
+        assert "amount" not in header
+
+
 class TestMonitor:
     def test_status_shape(self, client, analyst_headers):
         r = client.get("/api/monitor/status", headers=analyst_headers)

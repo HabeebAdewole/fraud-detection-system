@@ -5,6 +5,7 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from app import db
+from app.config import ALERT_THRESHOLDS
 from app.models.models import Alert, MonitorState, Prediction
 from app.utils.helpers import role_required
 from elliptic_predictor import screen_step
@@ -13,8 +14,11 @@ monitor_bp = Blueprint("monitor", __name__)
 
 START_STEP = 34        # replay begins after this (test period = 35..49)
 FINAL_STEP = 49
-RF_THRESHOLD = 0.9     # RF is well-calibrated: 0.9 ≈ 94% precision
-GNN_THRESHOLD = 0.99   # GNN runs overconfident, so its bar sits higher
+# Alert thresholds live in app.config so the interactive scoring route and this
+# monitor cannot drift apart (they did once, which made the Analyze page flag
+# almost everything when switched to GraphSAGE).
+RF_THRESHOLD = ALERT_THRESHOLDS["RandomForest"]
+GNN_THRESHOLD = ALERT_THRESHOLDS["GraphSAGE"]
 ALERT_BUDGET = 25      # max auto-alerts per step (top-N by score) — models an
                        # ops floor's analyst capacity; all crossings still counted
 
