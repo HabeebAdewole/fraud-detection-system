@@ -11,6 +11,7 @@ dist/
 build/
 
 # Models (large binary files — train locally)
+# Large model artifacts are ignored by default...
 models/*.pkl
 models/*.pt
 models/*.npy
@@ -18,6 +19,18 @@ models/*.npz
 models/metrics.json
 models/features.json
 models/elliptic_*.json
+
+# ...except the ones the deployed API loads at runtime. These must be in the
+# repository because the hosting platform builds from git and cannot retrain
+# (the 657 MB dataset is not committed). Total ~59 MB.
+!models/elliptic_rf.pkl
+!models/elliptic_scaler.pkl
+!models/elliptic_serving.npz
+!models/elliptic_features.json
+!models/elliptic_eval_curves.json
+!models/elliptic_metrics.json
+!models/elliptic_gnn_metrics.json
+!models/elliptic_combo_metrics.json
 
 # Data (datasets are downloaded locally, never committed)
 data/**/*.csv

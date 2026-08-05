@@ -1,0 +1,9 @@
+{
+  "model_version": "elliptic-rf-1.0",
+  "model_type": "RandomForest",
+  "accuracy": 0.9777,
+  "precision": 0.9248,
+  "recall": 0.7156,
+  "f1_score": 0.8069,
+  "auc_roc": 0.944
+}

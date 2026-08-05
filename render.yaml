@@ -1,0 +1,57 @@
+# Render Blueprint — deploys the API, the static frontend, and a PostgreSQL
+# instance in one go.  Render Dashboard -> New -> Blueprint -> pick this repo.
+#
+# After the first deploy the database is empty; load it from a machine that has
+# the Elliptic CSVs (see report/DEPLOYMENT.md).
+
+databases:
+  - name: tracer-db
+    databaseName: elliptic_fraud
+    user: tracer
+    plan: free
+
+services:
+  # ── API ────────────────────────────────────────────────────────────────
+  - type: web
+    name: tracer-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    healthCheckPath: /api/health
+    buildCommand: pip install -r requirements.txt
+    # ONE worker on purpose: each worker loads its own ~162 MB copy of the
+    # Random Forest and the serving matrix, so a second one would double
+    # memory without improving throughput on a free instance.
+    startCommand: gunicorn "run:app" --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 120
+    envVars:
+      - key: ENV
+        value: production
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: tracer-db
+          property: connectionString
+      # Locked to the frontend below. Update if you attach a custom domain.
+      - key: CORS_ORIGINS
+        value: https://tracer-web.onrender.com
+
+  # ── Frontend ───────────────────────────────────────────────────────────
+  - type: web
+    name: tracer-web
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://tracer-api.onrender.com/api
+    routes:
+      # single-page app: let React Router handle unknown paths
+      - type: rewrite
+        source: /*
+        destination: /index.html
