@@ -33,12 +33,15 @@ _index = None
 
 
 def _load():
+    """Reuse the artifacts elliptic_predictor already holds rather than loading
+    a second copy. The feature matrix alone is ~134 MB in memory, so two copies
+    would roughly double the process footprint for no benefit."""
     global _rf, _scaler, _bundle, _index
-    if _rf is None:
-        _rf = joblib.load(os.path.join(MODEL_DIR, "elliptic_rf.pkl"))
-        _scaler = joblib.load(os.path.join(MODEL_DIR, "elliptic_scaler.pkl"))
-        _bundle = np.load(os.path.join(MODEL_DIR, "elliptic_serving.npz"), allow_pickle=True)
-        _index = {int(t): i for i, t in enumerate(_bundle["tx_ids"])}
+    if _rf is not None:
+        return
+    import elliptic_predictor as ep
+    ep._load()
+    _rf, _scaler, _bundle, _index = ep._rf, ep._scaler, ep._bundle, ep._index
 
 
 def _path_contributions(x_scaled):
