@@ -40,6 +40,84 @@ class TestRoleEnforcement:
         assert r2.status_code == 200
 
 
+class TestAdminLockout:
+    """The admin panel must not be able to strand a deployment with no way in."""
+
+    def test_cannot_delete_own_account(self, client, admin_headers):
+        me = client.get("/api/auth/me", headers=admin_headers).get_json()
+        r = client.delete(f"/api/admin/users/{me['user_id']}", headers=admin_headers)
+        assert r.status_code == 409
+
+    def test_cannot_delete_the_only_admin(self, client, admin_headers):
+        # A second admin exists, so the seeded one becomes deletable...
+        client.post("/api/admin/users", headers=admin_headers, json={
+            "username": "admin2", "email": "a2@t.local", "password": "adminpw2", "role": "admin"})
+        h2 = {"Authorization": f"Bearer {client.post('/api/auth/login', json={'username': 'admin2', 'password': 'adminpw2'}).get_json()['access_token']}"}
+        first = client.get("/api/auth/me", headers=admin_headers).get_json()
+        assert client.delete(f"/api/admin/users/{first['user_id']}", headers=h2).status_code == 200
+        # ...but now admin2 is the last one, and deleting it is refused.
+        second = client.get("/api/auth/me", headers=h2).get_json()
+        assert client.delete(f"/api/admin/users/{second['user_id']}", headers=h2).status_code == 409
+
+    def test_cannot_demote_the_only_admin(self, client, admin_headers):
+        me = client.get("/api/auth/me", headers=admin_headers).get_json()
+        r = client.patch(f"/api/admin/users/{me['user_id']}", headers=admin_headers,
+                         json={"role": "analyst"})
+        assert r.status_code == 409
+        assert client.get("/api/auth/me", headers=admin_headers).get_json()["role"] == "admin"
+
+    def test_rejects_unknown_role(self, client, admin_headers):
+        r = client.post("/api/admin/users", headers=admin_headers, json={
+            "username": "x", "email": "x@t.local", "password": "pw", "role": "superuser"})
+        assert r.status_code == 400
+
+    def test_missing_fields_are_400_not_500(self, client, admin_headers):
+        assert client.post("/api/admin/users", headers=admin_headers,
+                           json={"username": "x"}).status_code == 400
+
+    def test_bodyless_post_is_400_not_415(self, client, admin_headers):
+        assert client.post("/api/admin/users", headers=admin_headers).status_code == 400
+
+
+class TestDemoMode:
+    """With DEMO_MODE on, the dashboards stay readable but nobody can change
+    an account — the published credentials would otherwise let any visitor
+    lock the owner out of the live deployment."""
+
+    def test_reads_still_work(self, demo_client, demo_admin_headers):
+        assert demo_client.get("/api/admin/users", headers=demo_admin_headers).status_code == 200
+
+    def test_create_is_blocked(self, demo_client, demo_admin_headers):
+        r = demo_client.post("/api/admin/users", headers=demo_admin_headers, json={
+            "username": "rogue", "email": "r@t.local", "password": "pw", "role": "admin"})
+        assert r.status_code == 403
+
+    def test_password_change_is_blocked(self, demo_client, demo_admin_headers):
+        me = demo_client.get("/api/auth/me", headers=demo_admin_headers).get_json()
+        r = demo_client.patch(f"/api/admin/users/{me['user_id']}", headers=demo_admin_headers,
+                              json={"password": "hijacked"})
+        assert r.status_code == 403
+        # the original password still works
+        assert demo_client.post("/api/auth/login",
+                                json={"username": "admin", "password": "adminpw"}).status_code == 200
+
+    def test_delete_is_blocked(self, demo_client, demo_admin_headers):
+        users = demo_client.get("/api/admin/users", headers=demo_admin_headers).get_json()["users"]
+        target = next(u for u in users if u["username"] == "analyst")
+        assert demo_client.delete(f"/api/admin/users/{target['user_id']}",
+                                  headers=demo_admin_headers).status_code == 403
+
+    def test_metrics_write_is_blocked(self, demo_client, demo_admin_headers):
+        r = demo_client.post("/api/admin/metrics", headers=demo_admin_headers, json={
+            "model_version": "v9", "accuracy": 1.0, "precision": 1.0,
+            "recall": 1.0, "f1_score": 1.0, "auc_roc": 1.0})
+        assert r.status_code == 403
+
+    def test_flag_is_advertised_to_the_client(self, demo_client, client, demo_admin_headers, admin_headers):
+        assert demo_client.get("/api/auth/me", headers=demo_admin_headers).get_json()["demo_mode"] is True
+        assert client.get("/api/auth/me", headers=admin_headers).get_json()["demo_mode"] is False
+
+
 class TestPredictionValidation:
     def test_missing_tx_id_is_400(self, client, analyst_headers):
         r = client.post("/api/predictions/", headers=analyst_headers, json={})

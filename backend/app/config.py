@@ -57,6 +57,14 @@ class Config:
     # Comma-separated list of allowed frontend origins. Wide open in dev.
     CORS_ORIGINS = [o.strip() for o in os.environ.get("CORS_ORIGINS", "*").split(",") if o.strip()]
 
+    # The public demo publishes its credentials in the README so visitors can
+    # look around. That makes account management reachable by anyone, so
+    # DEMO_MODE=true turns the write half of the admin panel read-only:
+    # metrics and curves still render, but nobody can change a password,
+    # delete an account or overwrite the stored benchmark. Off by default, so
+    # a normal deployment (and every local run) keeps the full admin panel.
+    DEMO_MODE = os.environ.get("DEMO_MODE", "false").lower() in ("1", "true", "yes")
+
 
 # --- Alerting policy -------------------------------------------------------
 # NOTE: these are ALERT thresholds, not classification thresholds. A model

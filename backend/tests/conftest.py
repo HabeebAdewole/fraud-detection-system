@@ -5,13 +5,19 @@ from app import create_app, db, bcrypt
 from app.models.models import Transaction, User
 
 
-@pytest.fixture()
-def app():
+def _build_app(**overrides):
     app = create_app({
         "TESTING": True,
         "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
         "JWT_SECRET_KEY": "test-secret",
+        **overrides,
     })
+    return app
+
+
+@pytest.fixture()
+def app():
+    app = _build_app()
     with app.app_context():
         db.create_all()
         db.session.add_all([
@@ -46,3 +52,34 @@ def analyst_headers(client):
 @pytest.fixture()
 def admin_headers(client):
     return {"Authorization": f"Bearer {_token(client, 'admin', 'adminpw')}"}
+
+
+# --- DEMO_MODE variant -----------------------------------------------------
+# Same seeded app with the public-demo guard switched on, so the read-only
+# behaviour can be asserted against the same routes.
+
+@pytest.fixture()
+def demo_app():
+    app = _build_app(DEMO_MODE=True)
+    with app.app_context():
+        db.create_all()
+        db.session.add_all([
+            User(username="admin", email="a@t.local", role="admin",
+                 password_hash=bcrypt.generate_password_hash("adminpw").decode()),
+            User(username="analyst", email="n@t.local", role="analyst",
+                 password_hash=bcrypt.generate_password_hash("analystpw").decode()),
+        ])
+        db.session.commit()
+        yield app
+        db.session.remove()
+        db.drop_all()
+
+
+@pytest.fixture()
+def demo_client(demo_app):
+    return demo_app.test_client()
+
+
+@pytest.fixture()
+def demo_admin_headers(demo_client):
+    return {"Authorization": f"Bearer {_token(demo_client, 'admin', 'adminpw')}"}

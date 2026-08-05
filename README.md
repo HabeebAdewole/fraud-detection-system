@@ -6,6 +6,11 @@ Sign in as `analyst` / `analyst123` (or `admin` / `admin123` for the model dashb
 > Hosted on a free tier, so the API sleeps after 15 minutes of inactivity. The
 > first request wakes it and reloads ~162 MB of model artifacts, which takes
 > about 50 seconds. Every request after that is fast.
+>
+> Because those credentials are public, the demo runs with `DEMO_MODE=true`:
+> every dashboard is readable, but account management and metric writes are
+> disabled so no visitor can lock the owner out. A local run has the full
+> admin panel.
 
 BSc Computer Science Final Year Project — Crescent University, Abeokuta
 
@@ -164,6 +169,12 @@ are in `backend/requirements-train.txt`. This keeps the deployed image roughly
   origins named in `CORS_ORIGINS`.
 - In development those secrets fall back to fixed values, debug is on and CORS
   is open, which is deliberate and local-only.
+- `DEMO_MODE=true` makes the admin panel's write half read-only — create,
+  update, delete and metric-write all return 403 while the dashboards stay
+  readable. It is set on the public deployment, where the credentials below
+  are published, and off everywhere else.
+- The admin panel cannot strand a deployment: it refuses to delete your own
+  account, and refuses to delete or demote the last remaining administrator.
 - The demo credentials above are published in this repository. Change them
   before putting anything that matters behind them.
 

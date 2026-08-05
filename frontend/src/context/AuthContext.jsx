@@ -22,8 +22,11 @@ export function AuthProvider({ children }) {
   async function login(username, password) {
     const data = await authApi.login(username, password);
     localStorage.setItem("token", data.access_token);
-    setUser(data.user);
-    return data.user;
+    // The API returns demo_mode alongside the user rather than inside it;
+    // fold it in so `user.demo_mode` reads the same here as it does from /me.
+    const profile = { ...data.user, demo_mode: data.demo_mode };
+    setUser(profile);
+    return profile;
   }
 
   function logout() {

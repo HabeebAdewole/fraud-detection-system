@@ -108,12 +108,39 @@ in `config.py`.
 
 ---
 
-## Changing the demo credentials
+## Demo credentials and DEMO_MODE
 
-The seeded accounts (`admin` / `admin123`, `analyst` / `analyst123`) are fine
-for a demonstration but are published in this repository. For anything public,
-edit `backend/seed_users.py` before running it, or change the passwords through
-the admin panel afterwards.
+The seeded accounts (`admin` / `admin123`, `analyst` / `analyst123`) are
+published in this repository so anyone can look around the live demo. That
+means every visitor arrives holding the administrator password, and the admin
+panel can change passwords and delete accounts — so without a guard a stranger
+could lock you out of your own deployment with a single request.
+
+`render.yaml` therefore sets **`DEMO_MODE=true`** on the hosted API. It makes
+the write half of the admin panel return 403:
+
+| Route | DEMO_MODE=true |
+|---|---|
+| `GET /api/admin/users` | allowed |
+| `GET /api/admin/metrics`, `GET /api/admin/curves` | allowed |
+| `POST /api/admin/users` | 403 |
+| `PATCH /api/admin/users/<id>` | 403 |
+| `DELETE /api/admin/users/<id>` | 403 |
+| `POST /api/admin/metrics` | 403 |
+
+Everything worth demonstrating still renders; nothing a visitor does can
+outlast their session. The flag is reported by `GET /api/health` and
+`GET /api/auth/me`, and the frontend reads the latter to disable the
+account-management controls rather than offering buttons that only fail.
+
+It defaults to off, so local development and any private deployment keep the
+full admin panel. For a real deployment, leave `DEMO_MODE` unset and change the
+seeded passwords instead — edit `backend/seed_users.py` before running it, or
+change them through the admin panel afterwards.
+
+Independently of the flag, the admin panel now refuses to delete your own
+account, and refuses to delete or demote the last remaining administrator;
+either would leave the deployment with no way in short of re-seeding.
 
 ---
 
@@ -126,6 +153,7 @@ the admin panel afterwards.
 | `JWT_SECRET_KEY` | Render | Token signing; boot fails without it |
 | `DATABASE_URL` | Render | Normalised automatically; TLS added for remote hosts |
 | `CORS_ORIGINS` | blueprint | Restricts the API to the frontend origin |
+| `DEMO_MODE` | blueprint | Makes admin writes read-only; off unless set |
 | `VITE_API_URL` | blueprint | Baked into the frontend at build time |
 
 Changing `CORS_ORIGINS` requires a redeploy of the API; changing

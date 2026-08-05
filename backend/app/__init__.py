@@ -48,6 +48,7 @@ def create_app(config=None):
             "status": "ok" if database == "ok" else "degraded",
             "environment": app.config["ENV_NAME"],
             "database": database,
+            "demo_mode": app.config["DEMO_MODE"],
         }, (200 if database == "ok" else 503)
 
     with app.app_context():

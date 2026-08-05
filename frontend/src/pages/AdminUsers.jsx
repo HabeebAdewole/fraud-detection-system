@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
 import { adminApi } from "../services/api";
+import { useAuth } from "../context/AuthContext";
 import Layout from "../components/shared/Layout";
 
 const BLANK = { username: "", email: "", password: "", role: "analyst" };
 
 export default function AdminUsers() {
+  const { user } = useAuth();
+  const readOnly = Boolean(user?.demo_mode);
   const [users, setUsers] = useState([]);
   const [form, setForm] = useState(BLANK);
   const [error, setError] = useState("");
@@ -31,8 +34,14 @@ export default function AdminUsers() {
 
   async function handleDelete(userId) {
     if (!window.confirm("Delete this account? This cannot be undone.")) return;
-    await adminApi.deleteUser(userId);
-    setUsers((prev) => prev.filter((u) => u.user_id !== userId));
+    setError(""); setSuccess("");
+    try {
+      await adminApi.deleteUser(userId);
+      setUsers((prev) => prev.filter((u) => u.user_id !== userId));
+    } catch (err) {
+      // The API refuses to delete the last administrator or your own account.
+      setError(err.message);
+    }
   }
 
   return (
@@ -46,10 +55,17 @@ export default function AdminUsers() {
           <p className="eyebrow mb-1">New account</p>
           <h2 className="font-display font-bold tracking-tight mb-5">Add a team member</h2>
 
+          {readOnly && (
+            <div className="panel-2 border-amber/30 bg-amber/10 px-4 py-3 text-sm text-amber mb-4">
+              <span className="font-medium">Read-only demo.</span> This deployment
+              publishes its sign-in details, so account management is disabled.
+              Run the project locally for the full admin panel.
+            </div>
+          )}
           {error && <div className="panel-2 border-red/30 bg-red/10 px-4 py-3 text-sm text-red mb-4">{error}</div>}
           {success && <div className="panel-2 border-cyan/30 bg-cyan/10 px-4 py-3 text-sm text-cyan mb-4">{success}</div>}
 
-          <div className="space-y-4">
+          <fieldset disabled={readOnly} className="space-y-4 disabled:opacity-50">
             <div><label className="field-label">Username</label><input className="input" value={form.username} onChange={set("username")} required /></div>
             <div><label className="field-label">Email</label><input type="email" className="input" value={form.email} onChange={set("email")} required /></div>
             <div><label className="field-label">Password</label><input type="password" className="input" value={form.password} onChange={set("password")} required minLength={6} /></div>
@@ -61,7 +77,7 @@ export default function AdminUsers() {
               </select>
             </div>
             <button className="btn-primary w-full">Create account</button>
-          </div>
+          </fieldset>
         </form>
 
         <div className="panel overflow-hidden">
@@ -85,9 +101,11 @@ export default function AdminUsers() {
                     </td>
                     <td className="font-mono text-[12px] text-muted">{new Date(u.created_at).toLocaleDateString()}</td>
                     <td className="text-right">
-                      <button onClick={() => handleDelete(u.user_id)} className="font-mono text-[11px] text-muted hover:text-red transition-colors">
-                        DELETE
-                      </button>
+                      {!readOnly && (
+                        <button onClick={() => handleDelete(u.user_id)} className="font-mono text-[11px] text-muted hover:text-red transition-colors">
+                          DELETE
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}

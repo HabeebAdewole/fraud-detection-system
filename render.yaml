@@ -40,6 +40,13 @@ services:
       # Locked to the frontend below. Update if you attach a custom domain.
       - key: CORS_ORIGINS
         value: https://tracer-web.onrender.com
+      # The README publishes this deployment's sign-in details so anyone can
+      # look around, which means every visitor arrives as an administrator.
+      # This makes the admin panel's write half read-only: the dashboards still
+      # render, but no visitor can change a password, delete an account or
+      # overwrite the stored benchmark. Remove it for a private deployment.
+      - key: DEMO_MODE
+        value: "true"
 
   # ── Frontend ───────────────────────────────────────────────────────────
   - type: web
