@@ -48,16 +48,28 @@ class TestAdminLockout:
         r = client.delete(f"/api/admin/users/{me['user_id']}", headers=admin_headers)
         assert r.status_code == 409
 
-    def test_cannot_delete_the_only_admin(self, client, admin_headers):
-        # A second admin exists, so the seeded one becomes deletable...
+    def test_one_admin_always_survives_a_deletion_chain(self, client, admin_headers):
+        """Deleting admins in sequence can never empty the role.
+
+        The last-admin check in delete_user is defensive rather than reachable:
+        whoever issues the delete is an admin, so the count is at least two
+        unless they are deleting themselves, which the self-delete guard
+        catches first. This pins the property that matters — you cannot delete
+        your way to zero administrators — however the guards divide the work."""
         client.post("/api/admin/users", headers=admin_headers, json={
             "username": "admin2", "email": "a2@t.local", "password": "adminpw2", "role": "admin"})
         h2 = {"Authorization": f"Bearer {client.post('/api/auth/login', json={'username': 'admin2', 'password': 'adminpw2'}).get_json()['access_token']}"}
+
+        # admin2 removes the original admin: allowed, two admins exist.
         first = client.get("/api/auth/me", headers=admin_headers).get_json()
         assert client.delete(f"/api/admin/users/{first['user_id']}", headers=h2).status_code == 200
-        # ...but now admin2 is the last one, and deleting it is refused.
+
+        # admin2 is now alone and cannot remove itself.
         second = client.get("/api/auth/me", headers=h2).get_json()
         assert client.delete(f"/api/admin/users/{second['user_id']}", headers=h2).status_code == 409
+
+        remaining = client.get("/api/admin/users", headers=h2).get_json()["users"]
+        assert sum(u["role"] == "admin" for u in remaining) == 1
 
     def test_cannot_demote_the_only_admin(self, client, admin_headers):
         me = client.get("/api/auth/me", headers=admin_headers).get_json()
