@@ -21,6 +21,20 @@ def _secret(name: str, dev_default: str) -> str:
     return dev_default
 
 
+def _normalise_db_url(url: str) -> str:
+    """Managed Postgres providers (Render, Heroku, Railway) hand out URLs
+    beginning `postgres://`, a scheme SQLAlchemy 2.x no longer recognises.
+    Rewrite it to the driver form, and require TLS when talking to a hosted
+    database over the public internet."""
+    if url.startswith("postgres://"):
+        url = "postgresql+psycopg2://" + url[len("postgres://"):]
+    elif url.startswith("postgresql://"):
+        url = "postgresql+psycopg2://" + url[len("postgresql://"):]
+    if url.startswith("postgresql+psycopg2://") and "localhost" not in url and "sslmode=" not in url:
+        url += ("&" if "?" in url else "?") + "sslmode=require"
+    return url
+
+
 class Config:
     ENV_NAME = "production" if IS_PROD else "development"
     DEBUG = not IS_PROD
@@ -29,10 +43,10 @@ class Config:
     JWT_SECRET_KEY = _secret("JWT_SECRET_KEY", "dev-only-jwt-change-me")
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=8)
 
-    SQLALCHEMY_DATABASE_URI = os.environ.get(
+    SQLALCHEMY_DATABASE_URI = _normalise_db_url(os.environ.get(
         "DATABASE_URL",
         "mysql+pymysql://root:@localhost/elliptic_fraud"
-    )
+    ))
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     # Hosted databases drop idle connections; recycle before they go stale.
     SQLALCHEMY_ENGINE_OPTIONS = {"pool_pre_ping": True, "pool_recycle": 280}
