@@ -1,4 +1,12 @@
 # Tracer — ML-Based Financial Fraud Detection System
+
+### 🌐 Live demo — **[tracer-web.onrender.com](https://tracer-web.onrender.com)**
+Sign in as `analyst` / `analyst123` (or `admin` / `admin123` for the model dashboards).
+
+> Hosted on a free tier, so the API sleeps after 15 minutes of inactivity. The
+> first request wakes it and reloads ~162 MB of model artifacts, which takes
+> about 50 seconds. Every request after that is fast.
+
 BSc Computer Science Final Year Project — Crescent University, Abeokuta
 
 A web-based anti-money-laundering console for the Bitcoin blockchain. Two
@@ -120,16 +128,50 @@ regression, ML inference determinism, batch screening, XAI additivity.)
 | GET/POST/DELETE | /api/admin/users | admin | User management |
 | GET | /api/admin/metrics | admin | All-model benchmark |
 
-## Security notes (local demo scope)
+## Deployment
+
+The live demo runs on Render (API + static frontend, from `render.yaml`) with
+the database on Neon. Full instructions are in
+**[report/DEPLOYMENT.md](report/DEPLOYMENT.md)**.
+
+| | |
+|---|---|
+| Frontend | Render static site — https://tracer-web.onrender.com |
+| API | Render web service — https://tracer-api-68u0.onrender.com |
+| Database | Neon PostgreSQL (Oregon) |
+| Health check | `GET /api/health` |
+
+Two notes on how the deployed build differs from local development:
+
+**PostgreSQL rather than MySQL.** The project uses MySQL locally, which is what
+Chapter Three of the report documents. Render offers no managed MySQL, so the
+hosted copy runs on PostgreSQL. No application code differs — SQLAlchemy
+generates the dialect's SQL — and `config.py` normalises whichever connection
+string it is given. Only the bulk loader needed dialect awareness, because it
+used a MySQL-specific statement to suspend foreign-key checks.
+
+**No PyTorch in the deployed image.** GraphSAGE scores are precomputed into
+`models/elliptic_serving.npz`, so nothing on the serving path imports torch.
+Runtime dependencies live in `backend/requirements.txt`; training dependencies
+are in `backend/requirements-train.txt`. This keeps the deployed image roughly
+250 MB smaller and the process footprint at ~162 MB.
+
+## Security notes
 
 - No open registration — accounts come from `seed_users.py` or an admin.
-- Demo credentials and dev secrets are for localhost only; set `SECRET_KEY`,
-  `JWT_SECRET_KEY` and `DATABASE_URL` via environment for anything beyond.
-- CORS is wide-open and Flask runs in debug mode by design for development.
+- With `ENV=production` the app refuses to start unless `SECRET_KEY` and
+  `JWT_SECRET_KEY` are supplied, debug is off, and CORS is restricted to the
+  origins named in `CORS_ORIGINS`.
+- In development those secrets fall back to fixed values, debug is on and CORS
+  is open, which is deliberate and local-only.
+- The demo credentials above are published in this repository. Change them
+  before putting anything that matters behind them.
 
 ## Documentation
 
 - **[PROJECT_EXPLAINER.md](PROJECT_EXPLAINER.md)** — how everything works in
   plain English, the 5-minute demo script, limitations, glossary.
+- **[report/DEPLOYMENT.md](report/DEPLOYMENT.md)** — deploying to Render + Neon,
+  loading the database remotely, free-tier caveats.
 - **[.plans/demo-shortlist.md](.plans/demo-shortlist.md)** — curated
   transaction IDs (illicit hubs, flagged unknowns, RF-vs-GNN disagreements).

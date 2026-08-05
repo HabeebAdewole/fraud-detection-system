@@ -73,10 +73,14 @@ The loader detects a remote database and sends larger batches. Expect 10–20
 minutes for 203,769 transactions and 234,355 edges over a home connection. It
 is idempotent — safe to re-run if the connection drops.
 
-## Step 3 — Check it
+## Step 4 — Check it
+
+Render appends a random suffix to service hostnames, so the API is not at the
+plain service name. Copy the URL from the `tracer-api` service page — for the
+current deployment it is `https://tracer-api-68u0.onrender.com`.
 
 ```bash
-curl https://tracer-api.onrender.com/api/health
+curl https://tracer-api-68u0.onrender.com/api/health
 ```
 
 ```json
@@ -96,11 +100,11 @@ artifacts. Every request after that is fast. This is fine for a portfolio link;
 it is not fine for a live demonstration in front of an audience — open the page
 a minute beforehand to wake it.
 
-**Render's free PostgreSQL is deleted after 30 days.** For a link that has to
-keep working, point `DATABASE_URL` at a provider whose free tier persists —
-Neon and Supabase both offer one, both are PostgreSQL, and both work with the
-URL normaliser already in `config.py`. Remove the `databases:` block from
-`render.yaml` and set `DATABASE_URL` manually in the service's environment.
+**Render's free PostgreSQL is deleted after 30 days**, which is why the
+database is on Neon and `render.yaml` has no `databases:` block. Neon's free
+tier persists, so the link keeps working. Supabase is an equivalent
+alternative; both are PostgreSQL and both work with the URL normaliser already
+in `config.py`.
 
 ---
 
