@@ -10,10 +10,6 @@ from app.utils.helpers import role_required
 
 admin_bp = Blueprint("admin", __name__)
 
-METRICS_PATH = os.path.join(
-    os.path.dirname(__file__), "..", "..", "..", "models", "metrics.json"
-)
-
 
 @admin_bp.route("/users", methods=["GET"])
 @jwt_required()
@@ -100,9 +96,14 @@ def get_curves():
 @role_required("admin")
 def save_metrics():
     """Manually store metrics after a re-training run."""
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
+    required = ["model_version", "accuracy", "precision", "recall", "f1_score", "auc_roc"]
+    missing = [k for k in required if k not in data]
+    if missing:
+        return jsonify({"error": f"Missing fields: {', '.join(missing)}"}), 400
     metrics = ModelMetrics(
         model_version=data["model_version"],
+        model_type=data.get("model_type"),
         accuracy=data["accuracy"],
         precision=data["precision"],
         recall=data["recall"],

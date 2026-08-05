@@ -8,7 +8,7 @@ class User(db.Model):
     username   = db.Column(db.String(80), unique=True, nullable=False)
     email      = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
-    role       = db.Column(db.Enum("analyst", "admin"), nullable=False, default="analyst")
+    role       = db.Column(db.Enum("analyst", "admin", name="user_role"), nullable=False, default="analyst")
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def to_dict(self):
@@ -65,7 +65,7 @@ class Alert(db.Model):
     __tablename__ = "alert"
     alert_id     = db.Column(db.Integer, primary_key=True)
     prediction_id = db.Column(db.Integer, db.ForeignKey("prediction.prediction_id"), nullable=False)
-    alert_status = db.Column(db.Enum("open", "resolved"), default="open", nullable=False)
+    alert_status = db.Column(db.Enum("open", "resolved", name="alert_status"), default="open", nullable=False)
     assigned_to  = db.Column(db.Integer, db.ForeignKey("user.user_id"))
     resolved_at  = db.Column(db.DateTime)
     notes        = db.Column(db.Text)

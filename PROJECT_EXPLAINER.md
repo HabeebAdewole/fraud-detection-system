@@ -1,5 +1,4 @@
 # Tracer — Plain-English Project Explainer
-*Read this twice and you can defend every layer of the system.*
 
 ---
 

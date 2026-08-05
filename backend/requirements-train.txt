@@ -1,0 +1,15 @@
+# Training / research dependencies — NOT needed to serve the API.
+# Install on top of requirements.txt when retraining or rebuilding artifacts:
+#   pip install -r requirements.txt -r requirements-train.txt
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu
+#   pip install torch_geometric
+
+-r requirements.txt
+
+imbalanced-learn==0.12.3   # SMOTE
+pandas==2.2.2              # dataset loading / preparation
+pytest==9.1.1              # test suite
+psutil                     # memory profiling during optimisation
+
+# torch and torch_geometric are installed separately (see header) because the
+# CPU wheel comes from PyTorch's own index rather than PyPI.

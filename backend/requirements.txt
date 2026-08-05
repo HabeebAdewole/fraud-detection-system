@@ -1,12 +1,23 @@
+# Runtime dependencies — what the deployed API actually needs.
+#
+# NOTE: torch / torch_geometric are deliberately absent. GraphSAGE scores are
+# precomputed into models/elliptic_serving.npz, so nothing on the serving path
+# imports torch. That keeps the deployed image roughly 250 MB smaller.
+# Training dependencies live in requirements-train.txt.
+
 flask==3.0.3
 flask-sqlalchemy==3.1.1
 flask-bcrypt==1.0.1
 flask-jwt-extended==4.6.0
 flask-cors==4.0.1
-pymysql==1.1.1
+pymysql==1.1.1              # local development (MySQL via XAMPP)
+psycopg2-binary==2.9.10     # hosted deployment (PostgreSQL on Render)
 cryptography==42.0.8
+
+# ML inference — scikit-learn must be present to unpickle the Random Forest
 scikit-learn==1.5.1
-imbalanced-learn==0.12.3
-pandas==2.2.2
 numpy==1.26.4
 joblib==1.4.2
+
+# production WSGI server
+gunicorn==23.0.0

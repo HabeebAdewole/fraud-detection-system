@@ -81,11 +81,13 @@ venv\Scripts\pip install torch_geometric
 # 3. Data: download the 3 CSVs from Kaggle (ellipticco/elliptic-data-set)
 #    into data/elliptic/
 
-# 4. Train + prepare (from repo root)
-backend\venv\Scripts\python.exe ml_pipeline\elliptic_train_rf.py
-backend\venv\Scripts\python.exe ml_pipeline\elliptic_train_gnn.py
-backend\venv\Scripts\python.exe ml_pipeline\elliptic_build_serving.py
-backend\venv\Scripts\python.exe ml_pipeline\elliptic_load_db.py
+# 4. Train + prepare (from repo root — run in this order, each depends on the last)
+backend\venv\Scripts\python.exe ml_pipeline\elliptic_train_rf.py      # Random Forest
+backend\venv\Scripts\python.exe ml_pipeline\elliptic_train_gnn.py     # GraphSAGE (+ node embeddings)
+backend\venv\Scripts\python.exe ml_pipeline\elliptic_train_combo.py   # RF + GNN embeddings (needs the GNN)
+backend\venv\Scripts\python.exe ml_pipeline\elliptic_build_serving.py # serving bundle used at request time
+backend\venv\Scripts\python.exe ml_pipeline\elliptic_eval_curves.py   # ROC / confusion / importance for the admin charts
+backend\venv\Scripts\python.exe ml_pipeline\elliptic_load_db.py       # load transactions, edges + all 3 metric rows into MySQL
 
 # 5. Seed logins (admin/admin123, analyst/analyst123 — local demo only)
 cd backend && venv\Scripts\python.exe seed_users.py

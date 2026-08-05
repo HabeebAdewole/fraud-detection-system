@@ -177,7 +177,9 @@ export default function PredictTransaction() {
 
                     {result.alert && (
                       <p className="mt-5 panel-2 border-amber/25 bg-amber/8 px-3 py-2.5 text-[12px] text-amber">
-                        Open alert #{result.alert.alert_id} created — review under Alerts.
+                        {result.alert_is_new
+                          ? `Open alert #${result.alert.alert_id} created — review under Alerts.`
+                          : `Already has open alert #${result.alert.alert_id} — review under Alerts.`}
                       </p>
                     )}
                   </>
@@ -199,7 +201,8 @@ export default function PredictTransaction() {
                     const aggPct = total > 0 ? Math.round((Math.abs(g.aggregate) / total) * 100) : 0;
                     return (
                       <p className="text-[13px] text-muted leading-relaxed mb-4">
-                        Starting from the base rate of {(explanation.base_value * 100).toFixed(0)}%,
+                        Starting from the model's neutral point of {(explanation.base_value * 100).toFixed(0)}%
+                        {" "}(the balanced training baseline, not the real-world fraud rate),
                         the transaction's own features moved the score by{" "}
                         <span className="font-mono text-text">{g.local >= 0 ? "+" : ""}{(g.local * 100).toFixed(1)}pp</span>{" "}
                         and its network-neighbourhood features by{" "}
