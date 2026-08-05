@@ -1,14 +1,14 @@
-# Render Blueprint — deploys the API, the static frontend, and a PostgreSQL
-# instance in one go.  Render Dashboard -> New -> Blueprint -> pick this repo.
+# Render Blueprint — deploys the API and the static frontend.
+# Render Dashboard -> New -> Blueprint -> pick this repo.
+#
+# The database is NOT provisioned here. Render's free PostgreSQL is deleted
+# after 30 days, which would silently break the link. The database lives on
+# Neon instead, whose free tier persists; you paste its connection string when
+# applying the blueprint (DATABASE_URL is marked `sync: false` below, so Render
+# prompts for it and keeps it out of this file).
 #
 # After the first deploy the database is empty; load it from a machine that has
 # the Elliptic CSVs (see report/DEPLOYMENT.md).
-
-databases:
-  - name: tracer-db
-    databaseName: elliptic_fraud
-    user: tracer
-    plan: free
 
 services:
   # ── API ────────────────────────────────────────────────────────────────
@@ -32,10 +32,11 @@ services:
         generateValue: true
       - key: JWT_SECRET_KEY
         generateValue: true
+      # Paste the Neon connection string when prompted. Prefer Neon's POOLED
+      # endpoint (the host contains "-pooler"). config.py rewrites the scheme
+      # for SQLAlchemy and adds sslmode=require if it is missing.
       - key: DATABASE_URL
-        fromDatabase:
-          name: tracer-db
-          property: connectionString
+        sync: false
       # Locked to the frontend below. Update if you attach a custom domain.
       - key: CORS_ORIGINS
         value: https://tracer-web.onrender.com
