@@ -49,8 +49,11 @@ services:
     buildCommand: npm ci && npm run build
     staticPublishPath: ./dist
     envVars:
+      # Render appends a random suffix to service hostnames, so this cannot be
+      # derived from the service name. Vite inlines it at BUILD time, so
+      # changing it requires a rebuild, not just a restart.
       - key: VITE_API_URL
-        value: https://tracer-api.onrender.com/api
+        value: https://tracer-api-68u0.onrender.com/api
     routes:
       # single-page app: let React Router handle unknown paths
       - type: rewrite
